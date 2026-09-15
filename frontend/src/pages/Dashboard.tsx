@@ -77,27 +77,26 @@ export const Dashboard: React.FC = () => {
                 RAILWAY OPERATIONS CONTROL
               </span>
               <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mt-1">
-                AI-Assisted Maintenance Planning <br className="hidden sm:inline" />
-                and Dynamic Block Scheduling
+                Maintenance Planning and Timetable Coordination
               </h1>
             </div>
 
             <p className="text-sm text-slate-600 max-w-xl">
-              Monitor issues, optimize maintenance windows, and coordinate engineering work around train operations.
+              Monitor reported issues, review AI-generated maintenance plans, coordinate engineering work, and manage operational blocks.
             </p>
 
             <div className="flex flex-wrap items-center gap-3 pt-1">
               <Link
-                to="/planner"
+                to="/manager/timetable"
                 className="px-5 py-2.5 bg-rail-maroon hover:bg-rail-maroon-dark text-white rounded-lg font-bold text-xs shadow-xs transition-colors"
               >
-                [ OPEN OPERATIONS ]
+                [ VIEW TIMETABLE ]
               </Link>
               <Link
-                to="/corridors/2"
+                to="/manager/approval-planning"
                 className="px-5 py-2.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg font-bold text-xs transition-colors"
               >
-                [ VIEW TIMETABLE ]
+                [ OPEN PENDING APPROVALS ]
               </Link>
             </div>
           </div>

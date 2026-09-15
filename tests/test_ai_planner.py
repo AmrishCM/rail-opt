@@ -134,3 +134,69 @@ def test_p7_replan_request_generates_candidate_plans(tokens):
     assert candidates[0]["train_conflicts"] == 0
     assert "trade_off" in candidates[0]
     assert "trade_off" in candidates[1]
+
+def test_p8_issue_ai_plan_and_approval_workflow(tokens):
+    """P.8 — Automatic AI plan generation upon issue selection, and Manager Approve & Assign atomic transaction."""
+    mgr_headers = {"Authorization": f"Bearer {tokens['manager']}"}
+    insp_headers = {"Authorization": f"Bearer {tokens['inspector']}"}
+
+    # Step 1: Inspector creates an issue
+    issue_payload = {
+        "description": "Intermittent track circuit failure on C2",
+        "defect_type": "Track Circuit Intermittent Failure",
+        "severity": 8,
+        "safety_impact": 9,
+        "department": "S&T/Signalling",
+        "location_name": "Section C2 / KM 124.6",
+        "estimated_duration": 90,
+        "required_block_type": "FULL_BLOCK"
+    }
+    create_res = client.post("/api/tasks", json=issue_payload, headers=insp_headers)
+    assert create_res.status_code == 200, f"Create issue failed: {create_res.text}"
+    created_task = create_res.json()
+    task_id = created_task["task_id"]
+    ref_no = created_task["reference_no"]
+
+    # Step 2: Manager retrieves automatic AI recommended plan for this issue
+    plan_res = client.get(f"/api/planning/issue-plan/{task_id}", headers=mgr_headers)
+    assert plan_res.status_code == 200, f"Failed to get issue plan: {plan_res.text}"
+    plan_data = plan_res.json()
+
+    # Verify Issue Information
+    assert plan_data["task_id"] == task_id
+    assert plan_data["issue_id"] == ref_no
+    assert "asset" in plan_data
+    assert plan_data["safety_impact"] == "HIGH"
+    assert "location" in plan_data
+
+    # Verify AI Recommended Plan
+    rec_plan = plan_data["recommended_plan"]
+    assert "maintenance_window" in rec_plan
+    assert "track" in rec_plan
+    assert "engineer" in rec_plan
+    assert rec_plan["estimated_duration_minutes"] == 90
+    assert "lowest operational conflict" in rec_plan["reason"]
+
+    # Verify Operational Conflicts
+    conflicts = plan_data["operational_conflicts"]
+    assert "trains" in conflicts
+    assert "conflict_status" in conflicts
+
+    # Verify Timeline Preview
+    assert "timeline_preview" in plan_data
+    assert len(plan_data["timeline_preview"]) >= 1
+
+    # Step 3: Inspector attempt to approve -> 403 Forbidden
+    unauth_res = client.post(f"/api/planning/issue-plan/{task_id}/approve", json={}, headers=insp_headers)
+    assert unauth_res.status_code == 403
+
+    # Step 4: Manager Approves & Assigns Plan
+    approve_res = client.post(f"/api/planning/issue-plan/{task_id}/approve", json={"comments": "Approved for possession."}, headers=mgr_headers)
+    assert approve_res.status_code == 200, f"Approval failed: {approve_res.text}"
+    approve_data = approve_res.json()
+    assert approve_data["success"] is True
+    assert approve_data["version"] == 1
+    assert approve_data["status"] == "APPROVED"
+    assert "work_order_id" in approve_data
+    assert "assigned_window" in approve_data
+

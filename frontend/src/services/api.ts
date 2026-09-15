@@ -230,6 +230,16 @@ export async function fetchBaselineComparison(planId?: number | string) {
   return res.data
 }
 
+export async function fetchIssueAiPlan(taskId: number | string) {
+  const res = await api.get(`/planning/issue-plan/${taskId}`)
+  return res.data
+}
+
+export async function approveIssuePlan(taskId: number | string, payload?: { comments?: string; assigned_engineer_id?: number }) {
+  const res = await api.post(`/planning/issue-plan/${taskId}/approve`, payload || {})
+  return res.data
+}
+
 // Field Execution
 export async function fetchTodayWork() {
   const res = await api.get('/execution/today')

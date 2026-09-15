@@ -3,25 +3,43 @@
 @tailwind utilities;
 
 :root {
-  --rail-maroon: #881337;
-  --rail-maroon-dark: #4c0519;
-  --rail-navy: #0f172a;
-  --rail-slate: #1e293b;
-  --rail-surface: #ffffff;
-  --rail-bg: #f8fafc;
-  --rail-border: #e2e8f0;
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  --bg-primary: #f5f6f7;
+  --surface: #ffffff;
+  --surface-secondary: #eef1f3;
+
+  --text-primary: #172027;
+  --text-secondary: #59636b;
+  --text-muted: #737d84;
+
+  --border: #d7dde1;
+
+  --primary: #8f1d2c;
+  --primary-dark: #711522;
+
+  --success: #26734d;
+  --warning: #a66a00;
+  --danger: #b42318;
+  --info: #315f86;
+
+  --background: #f5f6f7;
+  --foreground: #172027;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Accessible focus outline */
+*:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
 }
 
 /* Smooth scrolling */
 html {
   scroll-behavior: smooth;
+  background-color: var(--bg-primary);
 }

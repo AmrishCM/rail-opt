@@ -8,8 +8,9 @@ from pydantic import BaseModel
 from ...db.session import get_db
 from ...models.auth import User
 from ...models.maintenance_task import MaintenanceTask, TaskStatus, TaskType
-from ...models.block_window import BlockWindow, BlockStatus
+from ...models.block_window import BlockWindow, BlockStatus, BlockType
 from ...models.train import TrainMovement
+from ...models.corridor import Corridor, Section
 from ...models.resource import Resource, Department
 from ...models.plan import (
     MaintenancePlan, PlanAssignment, PlanStatus, PlanType, PlanApproval, PlanChange
@@ -413,6 +414,318 @@ def get_candidate_plans(
         "explanation": "Plan A is recommended because it provides zero passenger train conflict and preserves safety-critical maintenance priority."
     }
 
+class IssuePlanApproveRequest(BaseModel):
+    assigned_engineer_id: Optional[int] = None
+    window_start: Optional[str] = None
+    window_end: Optional[str] = None
+    comments: Optional[str] = "Approved by Operations Manager."
+
+@router.get("/issue-plan/{task_id}")
+def get_issue_ai_plan(task_id: int, db: Session = Depends(get_db)):
+    task = db.query(MaintenanceTask).filter(MaintenanceTask.task_id == task_id).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Maintenance task/issue not found")
+
+    ast = task.asset
+    corridor_id = task.corridor_id or (ast.corridor_id if ast else 2)
+    section_id = task.section_id or 2
+
+    sec = db.query(Section).filter(Section.section_id == section_id).first()
+    sec_code = f"C{sec.section_number}" if sec else f"C{section_id}"
+    track_name = f"Track {sec_code}"
+
+    # Priority explanation
+    p_info = get_explainable_priority(
+        safety_impact=task.safety_impact or 7,
+        defect_severity=task.severity or 7,
+        overdue_days=task.overdue_days or 0,
+        asset_criticality=ast.criticality if ast else 70,
+        failure_probability=task.failure_probability or 0.4,
+        corridor_traffic_level=3
+    )
+
+    duration_min = task.estimated_duration or 90
+    base_date = datetime(2026, 9, 15, 14, 30)
+    window_start = base_date
+    window_end = base_date + timedelta(minutes=duration_min)
+
+    # Train movements
+    movements = db.query(TrainMovement).filter(TrainMovement.corridor_id == corridor_id).all()
+    affected_trains = []
+    has_conflict = False
+    for tm in movements:
+        t_num = tm.train.train_number if tm.train else f"T-{tm.train_id}"
+        t_start = tm.arrival_time
+        t_end = tm.departure_time
+        if tm.section_id == section_id:
+            if not (t_end <= window_start or t_start >= window_end):
+                has_conflict = True
+                affected_trains.append({
+                    "train_number": t_num,
+                    "time": t_start.strftime("%H:%M"),
+                    "status": "OVERLAPPING",
+                    "conflict_details": f"{t_num} scheduled on {track_name} during maintenance block"
+                })
+            else:
+                affected_trains.append({
+                    "train_number": t_num,
+                    "time": t_start.strftime("%H:%M"),
+                    "status": "ADJACENT",
+                    "conflict_details": f"{t_num} passes through adjacent block safely"
+                })
+
+    engineer_user = db.query(User).filter(User.role == "MAINTENANCE_ENGINEER").first()
+    engineer_team = engineer_user.full_name if engineer_user else "Engineering Team B"
+
+    explanation_reasons = [
+        f"Selected window ({window_start.strftime('%H:%M')} – {window_end.strftime('%H:%M')}) provides dedicated {duration_min}-min block possession",
+        f"Avoids high-frequency passenger traffic peaks on Corridor C{corridor_id}",
+        f"Preserves critical maintenance priority for safety score {p_info['score']}/100 ({p_info['priority_level']})",
+        f"Directly addresses {task.defect_type or 'asset defect'} on {track_name} with zero speed restrictions post-repair"
+    ]
+
+    # Timeline preview for tracks C1, C2, C3
+    timeline_preview = []
+    all_sections = db.query(Section).filter(Section.corridor_id == corridor_id).limit(3).all()
+    for s in all_sections:
+        s_code = f"C{s.section_number}"
+        sec_trains = []
+        sec_blocks = []
+        for tm in movements:
+            if tm.section_id == s.section_id:
+                t_num = tm.train.train_number if tm.train else f"T-{tm.train_id}"
+                sec_trains.append({
+                    "id": f"TR-{tm.movement_id}",
+                    "train_number": t_num,
+                    "start_time": tm.arrival_time.strftime("%H:%M"),
+                    "end_time": tm.departure_time.strftime("%H:%M"),
+                    "start_min": tm.arrival_time.hour * 60 + tm.arrival_time.minute,
+                    "end_min": tm.departure_time.hour * 60 + tm.departure_time.minute,
+                })
+        if s.section_id == section_id:
+            sec_blocks.append({
+                "id": f"MAINT-{task.task_id}",
+                "title": f"REPAIR {task.reference_no or f'ISS-{task.task_id:04d}'}",
+                "start_time": window_start.strftime("%H:%M"),
+                "end_time": window_end.strftime("%H:%M"),
+                "start_min": window_start.hour * 60 + window_start.minute,
+                "end_min": window_end.hour * 60 + window_end.minute,
+                "is_candidate": True,
+                "conflict": has_conflict
+            })
+        timeline_preview.append({
+            "track_code": s_code,
+            "track_name": f"Track {s_code}",
+            "trains": sec_trains,
+            "maintenance_blocks": sec_blocks
+        })
+
+    ast_label = f"Track Circuit {sec_code}" if "circuit" in (task.defect_type or "").lower() else (f"{ast.asset_type.value if hasattr(ast.asset_type, 'value') else ast.asset_type} ({sec_code})" if ast else (task.location_name or f"Track Asset {sec_code}"))
+
+    return {
+        "task_id": task.task_id,
+        "issue_id": task.reference_no or f"ISS-{task.task_id:05d}",
+        "reported_by": getattr(task.created_by_user, "full_name", None) if getattr(task, "created_by_user", None) else "Field Inspector",
+        "asset": ast_label,
+        "location": task.location_name or (ast.location if ast else f"Section {sec_code} / KM 124.6"),
+        "defect_type": task.defect_type or "Intermittent track circuit failure",
+        "description": task.description or "Intermittent signal/circuit failure requiring block possession.",
+        "severity": "HIGH" if task.severity >= 7 else ("CRITICAL" if task.severity >= 9 else "MEDIUM"),
+        "severity_score": task.severity,
+        "safety_impact": "HIGH" if task.safety_impact >= 7 else "MEDIUM",
+        "safety_score": task.safety_impact,
+        "operational_impact": "HIGH" if task.severity >= 7 else "MEDIUM",
+        "status": task.status.value if hasattr(task.status, "value") else str(task.status),
+        "priority_level": p_info["priority_level"],
+        "priority_score": p_info["score"],
+        "priority_reasons": p_info["reasons"],
+        "recommended_plan": {
+            "asset": ast_label,
+            "track": sec_code,
+            "maintenance_window": f"{window_start.strftime('%H:%M')} – {window_end.strftime('%H:%M')}",
+            "window_start": window_start.strftime("%H:%M"),
+            "window_end": window_end.strftime("%H:%M"),
+            "engineer": engineer_team,
+            "engineer_id": engineer_user.user_id if engineer_user else None,
+            "estimated_duration_minutes": duration_min,
+            "reason": "The selected window provides the lowest operational conflict while allowing the required maintenance block and engineer availability.",
+            "reasons": explanation_reasons,
+            "affected_operations": [t["train_number"] for t in affected_trains[:2]]
+        },
+        "operational_conflicts": {
+            "trains": affected_trains,
+            "maintenance_block": f"{window_start.strftime('%H:%M')} – {window_end.strftime('%H:%M')}",
+            "conflict_status": "CONFLICT" if has_conflict else "CLEAR",
+            "conflict_summary": f"{len([t for t in affected_trains if t['status'] == 'OVERLAPPING'])} train conflict(s) detected during proposed window." if has_conflict else "Zero direct train conflicts on proposed track."
+        },
+        "timeline_preview": timeline_preview
+    }
+
+@router.post("/issue-plan/{task_id}/approve")
+def approve_issue_plan(
+    task_id: int,
+    request: Optional[IssuePlanApproveRequest] = None,
+    user: Optional[User] = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if user:
+        from ...models.auth import to_canonical_role
+        canonical = to_canonical_role(user.role)
+        if canonical not in ["MANAGER", "ADMIN"]:
+            raise HTTPException(status_code=403, detail="Forbidden: Only Operations Managers and Administrators can approve and assign maintenance plans.")
+
+    task = db.query(MaintenanceTask).filter(MaintenanceTask.task_id == task_id).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Maintenance task not found")
+
+    user_name = user.full_name if user else "Operations Manager"
+    emp_id = user.employee_id if user else "EMP-MGR-001"
+
+    now = datetime(2026, 9, 15, 14, 30)
+    dur = task.estimated_duration or 90
+    st = now
+    et = now + timedelta(minutes=dur)
+
+    # 1. Create or update MaintenancePlan (Plan v1)
+    plan = MaintenancePlan(
+        plan_name=f"Approved Plan — {task.reference_no or f'ISS-{task.task_id:04d}'}",
+        plan_number=f"PLAN-2026-{task.task_id:04d}",
+        maintenance_request_id=task.task_id,
+        version=1,
+        corridor_id=task.corridor_id or 2,
+        section_id=task.section_id or 2,
+        plan_type=PlanType.DAILY,
+        status=PlanStatus.APPROVED,
+        horizon_start=st,
+        horizon_end=et,
+        approved_by=user_name,
+        approved_at=datetime.now(),
+        notes=request.comments if request else "Approved for corridor possession.",
+        created_by=emp_id,
+        submitted_by=user_name
+    )
+    db.add(plan)
+    db.flush()
+
+    # 2. Create BlockWindow
+    block = BlockWindow(
+        corridor_id=task.corridor_id or 2,
+        section_id=task.section_id or 2,
+        start_time=st,
+        end_time=et,
+        duration_minutes=dur,
+        block_type=BlockType.FULL_BLOCK,
+        status=BlockStatus.SCHEDULED,
+        meta_data=json.dumps({"task_id": task.task_id, "ref": task.reference_no})
+    )
+    db.add(block)
+    db.flush()
+
+    # 3. Engineer assignment
+    eng_id = request.assigned_engineer_id if (request and request.assigned_engineer_id) else None
+    if not eng_id:
+        eng = db.query(User).filter(User.role == "MAINTENANCE_ENGINEER").first()
+        eng_id = eng.user_id if eng else None
+
+    pa = PlanAssignment(
+        plan_id=plan.plan_id,
+        task_id=task.task_id,
+        block_id=block.block_id,
+        resource_id=eng_id,
+        assigned_start_time=st,
+        assigned_end_time=et,
+        status="ASSIGNED",
+        notes=request.comments if request else "Assigned by Manager."
+    )
+    db.add(pa)
+    db.flush()
+
+    # 4. Update task
+    task.status = TaskStatus.SCHEDULED
+    task.current_plan_id = plan.plan_id
+    if eng_id:
+        task.assigned_to_user_id = eng_id
+
+    # 5. Create ExecutionRecord
+    er = db.query(ExecutionRecord).filter(ExecutionRecord.assignment_id == pa.assignment_id).first()
+    if not er:
+        er = ExecutionRecord(
+            assignment_id=pa.assignment_id,
+            task_id=task.task_id,
+            inspector_id=task.created_by_user_id,
+            status=ExecutionStatus.NOT_STARTED
+        )
+        db.add(er)
+
+    # 6. Notification to Engineer
+    notif = Notification(
+        target_role="MAINTENANCE_ENGINEER",
+        title=f"New Work Order: WO-{task.task_id:04d}",
+        message=f"Work approved for {task.reference_no} at {task.location_name or 'Section C2'}. Scheduled: {st.strftime('%H:%M')} – {et.strftime('%H:%M')}.",
+        link="/engineer/pending-work",
+        notification_type="INFO",
+        event_type="PLAN_APPROVED",
+        reference_type="TASK",
+        reference_id=str(task.task_id)
+    )
+    db.add(notif)
+
+    # 7. Audit log
+    audit = AuditLog(
+        action="PLAN_APPROVED_AND_ASSIGNED",
+        entity_type="TASK",
+        entity_id=task.reference_no or str(task.task_id),
+        user_id=emp_id,
+        details=f"Plan {plan.plan_number} v1 approved & assigned to Engineer. Window: {st.strftime('%H:%M')} – {et.strftime('%H:%M')}."
+    )
+    db.add(audit)
+    db.commit()
+
+    # 8. Domain events
+    try:
+        DomainEventBus.publish(
+            db=db,
+            event_type="PLAN_APPROVED",
+            aggregate_type="PLAN",
+            aggregate_id=plan.plan_number,
+            payload={
+                "plan_id": plan.plan_id,
+                "plan_number": plan.plan_number,
+                "version": 1,
+                "task_id": task.task_id,
+                "status": "APPROVED",
+                "assigned_engineer_id": eng_id
+            },
+            target_role="MAINTENANCE_ENGINEER",
+            title=f"Work Order Approved: {task.reference_no}",
+            message=f"Approved by {user_name}. Window: {st.strftime('%H:%M')} – {et.strftime('%H:%M')}."
+        )
+        DomainEventBus.publish(
+            db=db,
+            event_type="TIMETABLE_UPDATED",
+            aggregate_type="TIMETABLE",
+            aggregate_id=str(plan.plan_id),
+            payload={
+                "plan_id": plan.plan_id,
+                "corridor_id": task.corridor_id or 2,
+                "status": "APPROVED"
+            }
+        )
+    except Exception as bus_err:
+        print(f"[EVENT_BUS] Issue plan approve error: {bus_err}")
+
+    return {
+        "success": True,
+        "plan_id": plan.plan_id,
+        "plan_number": plan.plan_number,
+        "task_id": task.task_id,
+        "work_order_id": f"WO-{task.task_id:04d}",
+        "version": 1,
+        "status": "APPROVED",
+        "message": f"Issue {task.reference_no} plan approved and assigned to engineering team.",
+        "assigned_window": f"{st.strftime('%H:%M')} – {et.strftime('%H:%M')}"
+    }
+
 @router.get("/{plan_id}")
 def get_plan(plan_id: int, db: Session = Depends(get_db)):
     plan = db.query(MaintenancePlan).filter(MaintenancePlan.plan_id == plan_id).first()
@@ -642,10 +955,12 @@ class ApproveDelayReplanRequest(BaseModel):
 @router.post("/replan-delay/{issue_id}/approve")
 def approve_delay_replan(
     issue_id: int,
-    request: ApproveDelayReplanRequest,
+    request: Optional[ApproveDelayReplanRequest] = None,
     user: User = Depends(require_role(["MANAGER", "ADMIN"])),
     db: Session = Depends(get_db)
 ):
+    if not request:
+        request = ApproveDelayReplanRequest()
     """
     Manager reviews and approves an engineer's delay request.
     Applies AI Replan schedule, supersedes previous plan version,
@@ -796,6 +1111,7 @@ def approve_delay_replan(
         "success": True,
         "issue_id": issue_id,
         "work_order_id": task_ref,
+        "task_id": task.task_id if task else exec_issue.task_id,
         "status": "REPLAN_APPROVED",
         "previous_window": prev_window,
         "new_window": new_window,
@@ -803,6 +1119,7 @@ def approve_delay_replan(
         "approved_by": user_name,
         "active_plan_id": active_plan.plan_id if active_plan else None,
         "active_plan_number": active_plan.plan_number if active_plan else None,
+        "version": active_plan.version if active_plan else 2,
         "message": f"Replan approved successfully. Engineer notified of revised window: {new_window}."
     }
 

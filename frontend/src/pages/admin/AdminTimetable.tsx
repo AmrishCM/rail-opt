@@ -1,11 +1,9 @@
 import React from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { OperationalGanttTimeline } from '../../components/timeline/OperationalGanttTimeline'
-import { Clock, RotateCcw, ShieldAlert, Sliders } from 'lucide-react'
+import { Clock, Shield, Sliders, Settings } from 'lucide-react'
 
-export const ManagerTimetable: React.FC = () => {
-  const navigate = useNavigate()
-
+export const AdminTimetable: React.FC = () => {
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
       {/* Contextual Header */}
@@ -13,28 +11,28 @@ export const ManagerTimetable: React.FC = () => {
         <div>
           <div className="flex items-center space-x-2 text-[#8f1d2c] font-black text-xs uppercase tracking-wider mb-1">
             <Clock className="w-4 h-4" />
-            <span>OPERATIONS CONTROL</span>
+            <span>SYSTEM OPERATIONS</span>
           </div>
           <h1 className="text-2xl font-black text-[#172027]">Operational Timetable</h1>
           <p className="text-xs text-[#59636b] mt-0.5">
-            Full corridor schedule, train movements, scheduled maintenance blocks, and possession conflict resolution
+            Central network timetable, scheduled track possessions, and corridor train movements
           </p>
         </div>
 
         <div className="flex items-center space-x-3">
           <Link
-            to="/manager/approval-planning"
+            to="/admin/approval-planning"
             className="inline-flex items-center space-x-2 px-3.5 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-[#172027] text-xs font-bold border border-[#d7dde1] transition-all"
           >
-            <ShieldAlert className="w-4 h-4 text-[#8f1d2c]" />
+            <Shield className="w-4 h-4 text-[#8f1d2c]" />
             <span>Approval & Planning</span>
           </Link>
           <Link
-            to="/manager/replan"
+            to="/admin/settings"
             className="inline-flex items-center space-x-2 px-3.5 py-2 rounded-lg bg-[#8f1d2c] hover:bg-[#711522] text-white text-xs font-black transition-all shadow-sm"
           >
-            <RotateCcw className="w-4 h-4" />
-            <span>Replanning Center</span>
+            <Sliders className="w-4 h-4" />
+            <span>Configure Corridors</span>
           </Link>
         </div>
       </div>
@@ -44,12 +42,9 @@ export const ManagerTimetable: React.FC = () => {
         readOnly={false}
         corridorId={2}
         selectedDate="2026-09-15"
-        onOpenReplan={(conflictId, taskRef) => {
-          navigate('/manager/replan')
-        }}
       />
     </div>
   )
 }
 
-export default ManagerTimetable
+export default AdminTimetable

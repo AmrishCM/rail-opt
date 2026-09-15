@@ -457,6 +457,7 @@ def report_problem(
         "critical_event_id": critical_event_id,
         "event_number": event_number,
         "status": "PENDING_REPLAN",
+        "replan_required": True,
         "message": f"Delay issue reported (+{exec_issue.additional_duration_minutes} min). Manager notified for AI Replan."
     }
 
@@ -487,6 +488,7 @@ def list_delay_requests(
         results.append({
             "issue_id": iss.issue_id,
             "work_order_id": getattr(task, "reference_no", f"WO-{task.task_id if task else iss.task_id}"),
+            "task_ref": getattr(task, "reference_no", f"WO-{task.task_id if task else iss.task_id}"),
             "task_id": iss.task_id,
             "assignment_id": iss.assignment_id,
             "plan_id": plan.plan_id if plan else None,

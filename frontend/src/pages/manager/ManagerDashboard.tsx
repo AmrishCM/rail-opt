@@ -119,10 +119,10 @@ export const ManagerDashboard: React.FC = () => {
 
           <div className="shrink-0">
             <Link
-              to="/manager/planner"
+              to="/manager/approval-planning"
               className="inline-flex items-center space-x-2 px-6 py-3.5 bg-rail-maroon hover:bg-rail-maroon-dark text-white rounded-lg font-bold text-sm transition-all shadow-sm tracking-wide"
             >
-              <span>[ OPEN AUTO PLANNER ]</span>
+              <span>[ OPEN APPROVAL & PLANNING ]</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>

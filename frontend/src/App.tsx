@@ -29,6 +29,7 @@ import InspectorTimetable from './pages/inspector/InspectorTimetable'
 // Manager Pages
 import { ManagerDashboard } from './pages/manager/ManagerDashboard'
 import { ManagerAIPlanner } from './pages/manager/ManagerAIPlanner'
+import { ManagerApprovalPlanning } from './pages/manager/ManagerApprovalPlanning'
 import ManagerIssueApproval from './pages/manager/ManagerIssueApproval'
 import ManagerIssueStatus from './pages/manager/ManagerIssueStatus'
 import { ManagerReplanView } from './pages/manager/ManagerReplanView'
@@ -43,6 +44,7 @@ import EngineerTimetable from './pages/engineer/EngineerTimetable'
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard'
+import AdminTimetable from './pages/admin/AdminTimetable'
 import UserManagement from './pages/admin/UserManagement'
 import RoleManagement from './pages/admin/RoleManagement'
 import AdminConsole from './pages/admin/AdminConsole'
@@ -138,8 +140,9 @@ function App() {
               >
                 <Route index element={<Navigate to="/manager/dashboard" replace />} />
                 <Route path="dashboard" element={<ManagerDashboard />} />
-                <Route path="planner" element={<ManagerAIPlanner />} />
-                <Route path="approvals" element={<ManagerIssueApproval />} />
+                <Route path="approval-planning" element={<ManagerApprovalPlanning />} />
+                <Route path="approvals" element={<ManagerApprovalPlanning />} />
+                <Route path="planner" element={<Navigate to="/manager/approval-planning" replace />} />
                 <Route path="status" element={<ManagerIssueStatus />} />
                 <Route path="replan" element={<ManagerReplanView />} />
                 <Route path="timetable" element={<ManagerTimetable />} />
@@ -189,7 +192,9 @@ function App() {
                 <Route path="dashboard" element={<AdminDashboard />} />
                 <Route path="users" element={<UserManagement />} />
                 <Route path="roles" element={<RoleManagement />} />
-                <Route path="timetable" element={<ManagerTimetable />} />
+                <Route path="approval-planning" element={<ManagerApprovalPlanning />} />
+                <Route path="approvals" element={<ManagerApprovalPlanning />} />
+                <Route path="timetable" element={<AdminTimetable />} />
                 <Route path="issues" element={<ManagerIssueStatus />} />
                 <Route path="work-orders" element={<EngineerWorkQueue initialFilter="ALL" />} />
                 <Route path="authorities" element={<ManagerAuthorityContact />} />
