@@ -1,0 +1,13 @@
+{
+  "metadata": {
+    "generated_at": "2026-09-12T16:15:18.241022",
+    "demo": true,
+    "description": "Synthetic demo data for RailOpt-AI - NOT actual Indian Railways data",
+    "dataset_type": "synthetic/demo"
+  },
+  "corridors_count": 3,
+  "assets_count": 70,
+  "tasks_count": 50,
+  "blocks_count": 120,
+  "trains_count": 9
+}

@@ -1,0 +1,3 @@
+asset_id,asset_type,department,corridor_id,location,criticality,operating_status
+1,TRACK,Engineering/Track,1,C1-S1 KM 12.4 Rail Joint,85,OPERATIONAL
+2,SIGNAL,S&T/Signalling,1,C1-S1 Signal S-12,90,OPERATIONAL

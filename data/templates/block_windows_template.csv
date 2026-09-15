@@ -1,0 +1,2 @@
+block_id,corridor_id,section_id,start_time,end_time,duration_minutes,block_type
+1,1,1,2026-09-15T01:00:00,2026-09-15T04:30:00,210,COMBINED_BLOCK

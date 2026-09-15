@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: railopt-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: railopt_user
+      POSTGRES_PASSWORD: railopt_password
+      POSTGRES_DB: railopt_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: railopt-backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://railopt_user:railopt_password@postgres:5432/railopt_db
+      NVIDIA_API_KEY: ${NVIDIA_API_KEY:-}
+      NVIDIA_BASE_URL: https://integrate.api.nvidia.com/v1
+      NVIDIA_CHAT_MODEL: openai/gpt-oss-120b
+      NVIDIA_FALLBACK_CHAT_MODEL: openai/gpt-oss-20b
+    ports:
+      - "8100:8100"
+    depends_on:
+      - postgres
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: railopt-frontend
+    restart: unless-stopped
+    ports:
+      - "5180:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
