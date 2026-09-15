@@ -74,8 +74,15 @@ export const RealtimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       case 'ISSUE_CREATED':
       case 'ISSUE_UPDATED':
       case 'ISSUE_ACKNOWLEDGED':
+      case 'ISSUE_APPROVED':
+      case 'ISSUE_REJECTED':
+      case 'ISSUE_CLOSED':
+      case 'WORK_ASSIGNED':
+      case 'WORK_STARTED':
+      case 'WORK_RESOLVED':
         queryClient.invalidateQueries({ queryKey: ['tasks'] })
         queryClient.invalidateQueries({ queryKey: ['maintenance'] })
+        queryClient.invalidateQueries({ queryKey: ['todayWork'] })
         queryClient.invalidateQueries({ queryKey: ['diagnostics'] })
         queryClient.invalidateQueries({ queryKey: ['notifications'] })
         break

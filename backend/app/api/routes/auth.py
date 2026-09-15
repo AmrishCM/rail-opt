@@ -5,7 +5,7 @@ from pydantic import BaseModel, EmailStr
 from typing import List, Optional
 
 from ...db.session import get_db
-from ...models.auth import User, Role, Permission, Division
+from ...models.auth import User, Role, Permission, Division, to_canonical_role
 from ...models.scenario import AuditLog
 from ...utils.security import (
     verify_password,
@@ -34,6 +34,7 @@ class UserResponse(BaseModel):
     email: str
     full_name: str
     role: str
+    canonical_role: Optional[str] = "INSPECTOR"
     department: str
     division_name: Optional[str] = None
     section_code: Optional[str] = None
@@ -110,6 +111,7 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
         email=user.email,
         full_name=user.full_name,
         role=user.role,
+        canonical_role=to_canonical_role(user.role),
         department=user.department,
         division_name=div_name,
         section_code=user.section_code,
@@ -178,6 +180,7 @@ def get_me(user: User = Depends(require_current_user), db: Session = Depends(get
         email=user.email,
         full_name=user.full_name,
         role=user.role,
+        canonical_role=to_canonical_role(user.role),
         department=user.department,
         division_name=div_name,
         section_code=user.section_code,

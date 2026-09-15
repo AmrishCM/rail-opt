@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useAuth, getRoleDashboardPath, toCanonicalRole } from '../context/AuthContext'
 import {
   Train,
   Shield,
@@ -9,43 +9,58 @@ import {
   Sparkles,
   Lock,
   User,
-  AlertCircle
+  AlertCircle,
+  CheckCircle2
 } from 'lucide-react'
 
 export const Login: React.FC = () => {
   const { login, demoUsers } = useAuth()
   const navigate = useNavigate()
 
-  const [username, setUsername] = useState('engineer@railopt.demo')
+  const [username, setUsername] = useState('inspector@railopt.demo')
   const [password, setPassword] = useState('RailOpt@2026')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [welcomeInfo, setWelcomeInfo] = useState<{ name: string; role: string } | null>(null)
+
+  const handleSuccessfulAuth = (loggedInUser: any) => {
+    const canonical = toCanonicalRole(loggedInUser.role)
+    setWelcomeInfo({
+      name: loggedInUser.full_name,
+      role: canonical
+    })
+    const dest = getRoleDashboardPath(loggedInUser.role)
+    setTimeout(() => {
+      navigate(dest, { replace: true })
+    }, 900)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
     setLoading(true)
 
-    const success = await login(username, password)
-    if (success) {
-      navigate('/')
+    const userObj = await login(username, password)
+    if (userObj) {
+      handleSuccessfulAuth(userObj)
     } else {
       setError('Invalid Employee ID / Email or Password. Please try again.')
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   const handleQuickDemoLogin = async (email: string) => {
     setUsername(email)
     setPassword('RailOpt@2026')
     setLoading(true)
-    const success = await login(email, 'RailOpt@2026')
-    if (success) {
-      navigate('/')
+    setError(null)
+    const userObj = await login(email, 'RailOpt@2026')
+    if (userObj) {
+      handleSuccessfulAuth(userObj)
     } else {
       setError('Quick login failed. Please check backend server.')
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   return (
@@ -97,6 +112,16 @@ export const Login: React.FC = () => {
             <h2 className="text-lg font-black text-white tracking-tight">Railway Employee Sign In</h2>
             <p className="text-xs text-slate-400 mt-0.5">Enter Employee ID or Email and Password</p>
           </div>
+
+          {welcomeInfo && (
+            <div className="p-4 bg-emerald-500/15 border border-emerald-500/40 rounded-xl text-emerald-300 flex items-center space-x-3 animate-fade-in">
+              <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+              <div>
+                <p className="font-bold text-sm">Welcome back, {welcomeInfo.name}</p>
+                <p className="text-xs text-emerald-400/90 font-semibold mt-0.5">Role: {welcomeInfo.role} • Launching dedicated workspace...</p>
+              </div>
+            </div>
+          )}
 
           {error && (
             <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-xs text-red-400 flex items-center space-x-2">

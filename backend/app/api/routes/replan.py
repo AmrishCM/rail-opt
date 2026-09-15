@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from ...db.session import get_db
+from ...models.auth import User
 from ...models.plan import MaintenancePlan, PlanAssignment, PlanStatus, PlanType
 from ...models.maintenance_task import MaintenanceTask
 from ...models.block_window import BlockWindow
@@ -11,11 +12,16 @@ from ...models.train import TrainMovement
 from ...models.resource import Resource, Department
 from ...schemas.scenario import ReplanRequest, ReplanResponse
 from ...services.replanning.replanner import DynamicReplanner
+from ...utils.security import require_role
 
 router = APIRouter()
 
 @router.post("", response_model=ReplanResponse)
-def trigger_replan(request: ReplanRequest, db: Session = Depends(get_db)):
+def trigger_replan(
+    request: ReplanRequest,
+    user: User = Depends(require_role(["MANAGER", "ADMIN"])),
+    db: Session = Depends(get_db)
+):
     base_plan = db.query(MaintenancePlan).filter(MaintenancePlan.plan_id == request.plan_id).first()
     if not base_plan:
         raise HTTPException(status_code=404, detail="Base plan not found")

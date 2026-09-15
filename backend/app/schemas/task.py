@@ -13,7 +13,7 @@ class CriticalityBreakdown(BaseModel):
     formula: str = "safety(30) + failure_prob(25) + asset_crit(20) + overdue(10) + severity(10) + op_impact(5)"
 
 class MaintenanceTaskBase(BaseModel):
-    asset_id: int
+    asset_id: Optional[int] = None
     department: str
     task_type: str = "CORRECTIVE"
     defect_type: Optional[str] = None

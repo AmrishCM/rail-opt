@@ -106,7 +106,18 @@ export async function fetchAsset(id: number | string) {
 }
 
 // Maintenance Tasks & Priority
-export async function fetchTasks(params?: { department?: string; status?: string; severity_min?: number; corridor_id?: number; page?: number; page_size?: number }) {
+export async function fetchTasks(params?: {
+  department?: string
+  status?: string
+  severity_min?: number
+  corridor_id?: number
+  page?: number
+  page_size?: number
+  my_issues?: boolean
+  assigned_to_me?: boolean
+  completed?: boolean
+  scope?: string
+}) {
   const res = await api.get('/tasks', { params })
   return res.data
 }
@@ -123,6 +134,52 @@ export async function fetchTaskPriority(id: number | string) {
 
 export async function createTask(payload: any) {
   const res = await api.post('/tasks', payload)
+  return res.data
+}
+
+export async function approveTask(id: number | string, data?: { comments?: string; assigned_to_user_id?: number }) {
+  const res = await api.post(`/tasks/${id}/approve`, data || {})
+  return res.data
+}
+
+export async function rejectTask(id: number | string, data: { reason: string }) {
+  const res = await api.post(`/tasks/${id}/reject`, data)
+  return res.data
+}
+
+export async function clarifyTask(id: number | string, data: { comments: string }) {
+  const res = await api.post(`/tasks/${id}/clarify`, data)
+  return res.data
+}
+
+export async function assignTask(id: number | string, data: { assigned_to_user_id: number; instructions?: string }) {
+  const res = await api.post(`/tasks/${id}/assign`, data)
+  return res.data
+}
+
+export async function startTaskWork(id: number | string, data?: { notes?: string }) {
+  const res = await api.post(`/tasks/${id}/start`, data || {})
+  return res.data
+}
+
+export async function resolveTaskWork(id: number | string, data: { actual_duration_minutes?: number; completion_notes: string; photo_evidence?: string }) {
+  const res = await api.post(`/tasks/${id}/resolve`, data)
+  return res.data
+}
+
+export async function verifyTaskWork(id: number | string, data?: { verification_notes?: string }) {
+  const res = await api.post(`/tasks/${id}/verify`, data || {})
+  return res.data
+}
+
+// Railway Authorities
+export async function fetchAuthorities() {
+  const res = await api.get('/authorities')
+  return res.data
+}
+
+export async function escalateAuthority(data: { contact_id: string; issue_reference?: string; channel: string; message: string }) {
+  const res = await api.post('/authorities/escalate', data)
   return res.data
 }
 

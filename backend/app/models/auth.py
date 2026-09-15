@@ -6,6 +6,12 @@ from sqlalchemy.sql import func
 from ..db.session import Base
 
 class UserRoleEnum(str, enum.Enum):
+    # 4 Canonical Roles
+    INSPECTOR = "INSPECTOR"
+    MANAGER = "MANAGER"
+    ENGINEER = "ENGINEER"
+    ADMIN = "ADMIN"
+    # Legacy & specialized aliases
     SYSTEM_ADMIN = "SYSTEM_ADMIN"
     OPERATIONS_MANAGER = "OPERATIONS_MANAGER"
     MAINTENANCE_ENGINEER = "MAINTENANCE_ENGINEER"
@@ -14,6 +20,22 @@ class UserRoleEnum(str, enum.Enum):
     TRACTION_USER = "TRACTION_USER"
     FIELD_INSPECTOR = "FIELD_INSPECTOR"
     AUDITOR_VIEWER = "AUDITOR_VIEWER"
+
+def to_canonical_role(role_name: str) -> str:
+    if not role_name:
+        return "INSPECTOR"
+    norm = str(role_name).strip().upper()
+    if norm in ["INSPECTOR", "FIELD_INSPECTOR"]:
+        return "INSPECTOR"
+    if norm in ["MANAGER", "OPERATIONS_MANAGER"]:
+        return "MANAGER"
+    if norm in ["ENGINEER", "MAINTENANCE_ENGINEER", "TRACK_USER", "SIGNAL_USER", "TRACTION_USER"]:
+        return "ENGINEER"
+    if norm in ["ADMIN", "SYSTEM_ADMIN"]:
+        return "ADMIN"
+    if norm == "AUDITOR_VIEWER":
+        return "INSPECTOR"
+    return "ENGINEER"
 
 # Association table for Role <-> Permission
 role_permissions = Table(

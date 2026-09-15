@@ -35,7 +35,7 @@ class SettingsUpdateRequest(BaseModel):
     weights: Optional[Dict[str, float]] = None
 
 @router.get("/settings")
-def get_system_settings(user: User = Depends(get_current_user)):
+def get_system_settings(user: User = Depends(require_permission("system:settings"))):
     return {
         "status": "OPERATIONAL",
         "settings": SYSTEM_SETTINGS

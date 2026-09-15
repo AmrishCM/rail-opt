@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from dotenv import load_dotenv
 
 from ..db.session import get_db
-from ..models.auth import User, Permission, RefreshToken
+from ..models.auth import User, Permission, RefreshToken, to_canonical_role
 
 load_dotenv()
 
@@ -143,14 +143,21 @@ PERMISSION_ALIASES = {
     "planning:reject": ["plan:reject", "planning:reject"],
     "plan:reject": ["plan:reject", "planning:reject"],
     "planning:replan": ["plan:replan", "planning:replan", "replan:execute"],
-    "execution:start": ["execution:update", "execution:start"],
-    "execution:complete": ["execution:update", "execution:complete"],
+    "issue:create": ["issue:create", "maintenance:create"],
+    "maintenance:create": ["issue:create", "maintenance:create"],
+    "issue:approve": ["issue:approve", "issue:review", "maintenance:approve", "planning:approve", "plan:approve"],
+    "issue:reject": ["issue:reject", "issue:review", "planning:reject", "plan:reject"],
+    "issue:assign": ["issue:assign", "issue:review", "planning:create", "plan:create"],
+    "issue:review": ["issue:review", "issue:approve", "planning:approve"],
+    "execution:start": ["execution:update", "execution:start", "task:start"],
+    "execution:complete": ["execution:update", "execution:complete", "task:complete"],
+    "authority:contact": ["authority:contact", "planning:approve", "issue:review"],
 }
 
 def require_permission(required_permission: str):
     """
     Dependency factory to check if user has the specific permission code.
-    SYSTEM_ADMIN automatically has all permissions.
+    ADMIN / SYSTEM_ADMIN automatically has all permissions.
     """
     norm_code = normalize_permission_code(required_permission)
     aliases = PERMISSION_ALIASES.get(norm_code, [norm_code])
@@ -162,7 +169,8 @@ def require_permission(required_permission: str):
                 detail="Authentication required to perform this action"
             )
 
-        if user.role == "SYSTEM_ADMIN":
+        canonical = to_canonical_role(user.role)
+        if canonical == "ADMIN" or user.role in ["SYSTEM_ADMIN", "ADMIN"]:
             return user
 
         user_role = user.role_rel
@@ -186,7 +194,12 @@ def require_permission(required_permission: str):
 def require_role(allowed_roles: List[str]):
     """
     Dependency factory to check if user role is within allowed_roles list.
+    Supports canonical roles (INSPECTOR, MANAGER, ENGINEER, ADMIN) as well as legacy roles.
+    ADMIN / SYSTEM_ADMIN has unrestricted operational authority.
     """
+    normalized_allowed = {r.strip().upper() for r in allowed_roles}
+    canonical_allowed = {to_canonical_role(r) for r in allowed_roles}
+
     def role_checker(user: Optional[User] = Depends(get_current_user)):
         if not user:
             raise HTTPException(
@@ -194,7 +207,13 @@ def require_role(allowed_roles: List[str]):
                 detail="Authentication required"
             )
 
-        if user.role == "SYSTEM_ADMIN" or user.role in allowed_roles:
+        user_role = str(user.role).strip().upper()
+        canonical_user_role = to_canonical_role(user_role)
+
+        if canonical_user_role == "ADMIN" or user_role in ["SYSTEM_ADMIN", "ADMIN"]:
+            return user
+
+        if user_role in normalized_allowed or canonical_user_role in canonical_allowed or canonical_user_role in normalized_allowed:
             return user
 
         raise HTTPException(
@@ -206,19 +225,21 @@ def require_role(allowed_roles: List[str]):
 
 def get_user_data_scope(user: User) -> Dict[str, Any]:
     """
-    Returns organizational scope dict:
-    - is_global: bool (SYSTEM_ADMIN or AUDITOR_VIEWER or ALL sections)
+    Returns organizational scope dict based on canonical role:
+    - is_global: bool (ADMIN or ALL sections)
     - division_id: Optional[int]
     - department: Optional[str]
     - section_code: Optional[str]
     """
-    if user.role in ["SYSTEM_ADMIN", "AUDITOR_VIEWER"] or user.section_code == "ALL":
+    canonical = to_canonical_role(user.role)
+
+    if canonical == "ADMIN" or user.role in ["SYSTEM_ADMIN", "AUDITOR_VIEWER"] or user.section_code == "ALL":
         return {"is_global": True, "division_id": None, "department": None, "section_code": None}
 
-    if user.role == "OPERATIONS_MANAGER":
+    if canonical == "MANAGER" or user.role == "OPERATIONS_MANAGER":
         return {"is_global": False, "division_id": user.division_id, "department": None, "section_code": None}
 
-    if user.role == "FIELD_INSPECTOR":
+    if canonical == "INSPECTOR" or user.role == "FIELD_INSPECTOR":
         return {"is_global": False, "division_id": user.division_id, "department": user.department, "section_code": user.section_code}
 
     # Department engineers (Track, S&T, Traction, Maintenance)

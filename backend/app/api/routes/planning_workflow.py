@@ -125,6 +125,14 @@ def generate_recommended_plan(
     7. computes simulation KPIs
     8. stores plan with status AI_RECOMMENDED, linked to request
     """
+    if user:
+        from ...models.auth import to_canonical_role
+        if to_canonical_role(user.role) == "INSPECTOR":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied: Field inspectors cannot generate operational block plans."
+            )
+
     user_name = user.full_name if user else "Engineer Ravi"
     emp_id = user.employee_id if user else "EMP-ENG-003"
 

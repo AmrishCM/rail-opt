@@ -1,12 +1,48 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { loginUser, logoutUser, fetchCurrentUser, fetchDemoUsers } from '../services/api'
 
+export type CanonicalRole = 'INSPECTOR' | 'MANAGER' | 'ENGINEER' | 'ADMIN'
+
+export function toCanonicalRole(role?: string): CanonicalRole {
+  if (!role) return 'INSPECTOR'
+  const norm = role.trim().toUpperCase()
+  if (norm === 'INSPECTOR' || norm === 'FIELD_INSPECTOR') return 'INSPECTOR'
+  if (norm === 'MANAGER' || norm === 'OPERATIONS_MANAGER') return 'MANAGER'
+  if (
+    norm === 'ENGINEER' ||
+    norm === 'MAINTENANCE_ENGINEER' ||
+    norm === 'TRACK_USER' ||
+    norm === 'SIGNAL_USER' ||
+    norm === 'TRACTION_USER'
+  ) {
+    return 'ENGINEER'
+  }
+  if (norm === 'ADMIN' || norm === 'SYSTEM_ADMIN') return 'ADMIN'
+  if (norm === 'AUDITOR_VIEWER') return 'INSPECTOR'
+  return 'ENGINEER'
+}
+
+export function getRoleDashboardPath(role?: string): string {
+  const c = toCanonicalRole(role)
+  switch (c) {
+    case 'INSPECTOR':
+      return '/inspector/dashboard'
+    case 'MANAGER':
+      return '/manager/dashboard'
+    case 'ENGINEER':
+      return '/engineer/dashboard'
+    case 'ADMIN':
+      return '/admin/dashboard'
+  }
+}
+
 export interface UserProfile {
   user_id: number
   employee_id: string
   email: string
   full_name: string
   role: string
+  canonical_role?: string
   department: string
   division_name?: string
   section_code?: string
@@ -27,6 +63,7 @@ export interface DemoUser {
 
 interface AuthContextType {
   user: UserProfile | null
+  canonicalRole: CanonicalRole
   token: string | null
   isAuthenticated: boolean
   isLoading: boolean
@@ -50,8 +87,15 @@ const PERMISSION_ALIASES: Record<string, string[]> = {
   'planning:reject': ['plan:reject', 'planning:reject'],
   'plan:reject': ['plan:reject', 'planning:reject'],
   'planning:replan': ['plan:replan', 'planning:replan', 'replan:execute'],
-  'execution:start': ['execution:update', 'execution:start'],
-  'execution:complete': ['execution:update', 'execution:complete'],
+  'issue:create': ['issue:create', 'maintenance:create'],
+  'maintenance:create': ['issue:create', 'maintenance:create'],
+  'issue:approve': ['issue:approve', 'issue:review', 'maintenance:approve', 'planning:approve'],
+  'issue:reject': ['issue:reject', 'issue:review', 'planning:reject'],
+  'issue:assign': ['issue:assign', 'issue:review', 'planning:create'],
+  'issue:review': ['issue:review', 'issue:approve', 'planning:approve'],
+  'execution:start': ['execution:update', 'execution:start', 'task:start'],
+  'execution:complete': ['execution:update', 'execution:complete', 'task:complete'],
+  'authority:contact': ['authority:contact', 'planning:approve', 'issue:review'],
 }
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -107,7 +151,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null)
   }
 
-  const login = async (username: string, password: string = 'RailOpt@2026'): Promise<boolean> => {
+  const login = async (username: string, password: string = 'RailOpt@2026'): Promise<UserProfile | null> => {
     try {
       setIsLoading(true)
       const data = await loginUser({ username, password })
@@ -118,16 +162,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem('railopt_user', JSON.stringify(data.user))
       setToken(data.access_token)
       setUser(data.user)
-      return true
+      return data.user
     } catch (err) {
       console.error('Login failed:', err)
-      return false
+      return null
     } finally {
       setIsLoading(false)
     }
   }
 
-  const switchRole = async (email: string): Promise<boolean> => {
+  const switchRole = async (email: string): Promise<UserProfile | null> => {
     return login(email, 'RailOpt@2026')
   }
 
@@ -152,16 +196,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return aliases.some((alias) => userPerms.includes(alias))
   }
 
+  const canonicalRole = toCanonicalRole(user?.role)
+
   const hasRole = (roles: string[]): boolean => {
     if (!user) return false
-    if (user.role === 'SYSTEM_ADMIN') return true
-    return roles.includes(user.role)
+    if (user.role === 'SYSTEM_ADMIN' || canonicalRole === 'ADMIN') return true
+    const normalizedRoles = roles.map((r) => r.trim().toUpperCase())
+    return (
+      normalizedRoles.includes(user.role.toUpperCase()) ||
+      normalizedRoles.includes(canonicalRole)
+    )
   }
 
   return (
     <AuthContext.Provider
       value={{
         user,
+        canonicalRole,
         token,
         isAuthenticated: !!user && !!token,
         isLoading,

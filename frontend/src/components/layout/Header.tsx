@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useAuth, DemoUser } from '../../context/AuthContext'
+import { useAuth, DemoUser, getRoleDashboardPath, toCanonicalRole } from '../../context/AuthContext'
 import { useRealtime } from '../../context/RealtimeContext'
 import { fetchNotifications, markNotificationRead, fetchDatabaseHealth } from '../../services/api'
 import {
@@ -79,9 +79,13 @@ export const Header: React.FC<HeaderProps> = ({ onOpenEmergencyModal }) => {
   }
 
   const handleSwitchUser = async (email: string) => {
-    await switchRole(email)
+    const updated = await switchRole(email)
     setRoleModalOpen(false)
-    navigate('/')
+    if (updated) {
+      navigate(getRoleDashboardPath(updated.role))
+    } else {
+      navigate('/')
+    }
   }
 
   const handleNotificationClick = async (n: any) => {
@@ -142,7 +146,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenEmergencyModal }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
           {/* Brand Logo & Product Name */}
           <div className="flex items-center space-x-3">
-            <Link to="/" className="flex items-center space-x-2.5">
+            <Link to={getRoleDashboardPath(user?.role)} className="flex items-center space-x-2.5">
               <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20 font-black text-base tracking-tighter">
                 <Train className="w-5 h-5 text-white" />
               </div>
@@ -236,15 +240,17 @@ export const Header: React.FC<HeaderProps> = ({ onOpenEmergencyModal }) => {
               )}
             </div>
 
-            {/* Quick Emergency Defect Button */}
-            <button
-              onClick={onOpenEmergencyModal}
-              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-red-600/90 hover:bg-red-600 text-white text-xs font-bold transition-all shadow-sm shadow-red-500/20"
-              title="Report unexpected critical condition to trigger dynamic replanning"
-            >
-              <AlertOctagon className="w-3.5 h-3.5 animate-bounce" />
-              <span className="hidden sm:inline">Emergency Defect</span>
-            </button>
+            {/* Quick Emergency Defect Button (Manager & Admin only) */}
+            {['MANAGER', 'ADMIN'].includes(toCanonicalRole(user?.role)) && (
+              <button
+                onClick={onOpenEmergencyModal}
+                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-red-600/90 hover:bg-red-600 text-white text-xs font-bold transition-all shadow-sm shadow-red-500/20"
+                title="Report unexpected critical condition to trigger dynamic replanning"
+              >
+                <AlertOctagon className="w-3.5 h-3.5 animate-bounce" />
+                <span className="hidden sm:inline">Emergency Defect</span>
+              </button>
+            )}
 
             {/* 1-Click Role Switcher */}
             <button

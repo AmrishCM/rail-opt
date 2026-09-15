@@ -25,10 +25,14 @@ from . import (
     replan,
     data,
     timeline,
+    authorities,
 )
 
 # Create main API router
 api_router = APIRouter()
+
+# Authorities communication route
+api_router.include_router(authorities.router, prefix="/authorities", tags=["authorities"])
 
 # Authentication & RBAC
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])

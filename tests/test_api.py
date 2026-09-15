@@ -44,7 +44,10 @@ def test_api_optimize_and_simulation_flow():
     assert "comparison" in sim_data
     assert "improvements" in sim_data["comparison"]
 
-    # 3. Replan
+    # 3. Replan (Authorized Operations Manager)
+    login_res = client.post("/api/auth/login", json={"username": "manager@railopt.demo", "password": "RailOpt@2026"})
+    mgr_token = login_res.json().get("access_token")
+
     replan_res = client.post("/api/replan", json={
         "plan_id": plan_id,
         "event": {
@@ -52,7 +55,7 @@ def test_api_optimize_and_simulation_flow():
             "section_id": 2,
             "description": "Urgent Point Machine Failure"
         }
-    })
+    }, headers={"Authorization": f"Bearer {mgr_token}"})
     assert replan_res.status_code == 200
     replan_data = replan_res.json()
     assert "changed_assignments" in replan_data

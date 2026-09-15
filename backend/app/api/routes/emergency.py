@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
 from ...db.session import get_db
-from ...models.auth import User
+from ...models.auth import User, to_canonical_role
 from ...models.plan import MaintenancePlan, PlanAssignment, PlanStatus, PlanType, PlanChange
 from ...models.maintenance_task import MaintenanceTask, TaskStatus, TaskType
 from ...models.critical_event import CriticalEvent
@@ -17,7 +17,7 @@ from ...models.resource import Resource, Department
 from ...models.scenario import AuditLog
 from ...models.execution import Notification, ExecutionRecord, ExecutionStatus
 from ...services.replanning.replanner import DynamicReplanner
-from ...utils.security import get_current_user, require_permission
+from ...utils.security import get_current_user, require_permission, require_role
 from ...services.event_bus import DomainEventBus
 
 router = APIRouter()
@@ -220,7 +220,7 @@ def replan_event(
 @router.post("/replan")
 def replan_latest(
     payload: Optional[ReplanRequest] = None,
-    user: Optional[User] = Depends(get_current_user),
+    user: User = Depends(require_role(["MANAGER", "ADMIN"])),
     db: Session = Depends(get_db)
 ):
     """Fallback endpoint for replanning latest open critical event."""

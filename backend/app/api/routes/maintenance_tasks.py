@@ -1,18 +1,19 @@
 import random
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from typing import List, Optional
+from pydantic import BaseModel
 from ...db.session import get_db
 from ...models.maintenance_task import MaintenanceTask, TaskStatus, TaskType
 from ...models.asset import Asset
 from ...models.corridor import Section
 from ...models.scenario import AuditLog
-from ...models.auth import User
+from ...models.auth import User, to_canonical_role
 from ...schemas.task import MaintenanceTaskResponse, MaintenanceTaskCreate, CriticalityBreakdown
 from ...schemas.common import PaginatedResponse
 from ...ml.criticality import calculate_task_criticality
-from ...utils.security import get_current_user
+from ...utils.security import get_current_user, require_role, require_permission, get_user_data_scope
 from ...services.event_bus import DomainEventBus
 
 router = APIRouter()
@@ -55,6 +56,11 @@ def _format_task_dict(t: MaintenanceTask) -> dict:
     sec_id = sec.section_id if sec else (getattr(ast, "section_id", None) or 2)
     sec_name = sec.name if sec else "C2-02"
 
+    assigned_name = t.assigned_user.full_name if t.assigned_user else None
+    created_name = t.created_user.full_name if t.created_user else None
+    created_role = t.created_user.role if t.created_user else "FIELD_INSPECTOR"
+    track_num = getattr(ast, "track_number", "Track 2") if ast else "Track 2"
+
     return {
         "id": t.task_id,
         "task_id": t.task_id,
@@ -65,6 +71,8 @@ def _format_task_dict(t: MaintenanceTask) -> dict:
         "asset_id": t.asset_id,
         "asset_name": ast_name,
         "asset_location": ast_location,
+        "track": track_num,
+        "track_number": track_num,
         "corridor_id": corr.corridor_id if corr else (ast.corridor_id if ast else 2),
         "corridor_name": corr.name if corr else "Corridor C2",
         "section_id": sec_id,
@@ -75,6 +83,11 @@ def _format_task_dict(t: MaintenanceTask) -> dict:
         "defect_type": t.defect_type,
         "severity": t.severity,
         "reported_by": t.created_by_user_id or 3,
+        "created_by_user_id": t.created_by_user_id,
+        "created_user_name": created_name,
+        "created_user_role": created_role,
+        "assigned_to_user_id": t.assigned_to_user_id,
+        "assigned_user_name": assigned_name,
         "detected_at": t.detected_at.isoformat() if t.detected_at else None,
         "reported_at": t.detected_at.isoformat() if t.detected_at else None,
         "due_date": t.due_date.isoformat() if t.due_date else None,
@@ -108,6 +121,10 @@ def list_tasks(
     status: Optional[str] = None,
     severity_min: Optional[int] = None,
     corridor_id: Optional[int] = None,
+    my_issues: Optional[bool] = None,
+    assigned_to_me: Optional[bool] = None,
+    completed: Optional[bool] = None,
+    scope: Optional[str] = None,
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=200),
     user: Optional[User] = Depends(get_current_user),
@@ -115,11 +132,49 @@ def list_tasks(
 ):
     query = db.query(MaintenanceTask)
 
-    # Department filtering based on user role (Data scope)
-    if user and user.role in ["TRACK_USER", "SIGNAL_USER", "TRACTION_USER"]:
-        query = query.filter(MaintenanceTask.department == user.department)
+    canonical = to_canonical_role(user.role) if user else None
+
+    # Scope filters
+    if my_issues is True or scope == "my_issues":
+        if user:
+            query = query.filter(MaintenanceTask.created_by_user_id == user.user_id)
+    elif assigned_to_me is True or scope == "assigned":
+        if user:
+            query = query.filter(
+                (MaintenanceTask.assigned_to_user_id == user.user_id) |
+                (MaintenanceTask.department == user.department)
+            )
+    elif canonical == "INSPECTOR" and scope is None and my_issues is None and completed is None:
+        # Default inspector view to their submitted issues
+        if user:
+            query = query.filter(MaintenanceTask.created_by_user_id == user.user_id)
+    elif canonical == "ENGINEER" and scope is None and assigned_to_me is None:
+        # Department engineering view
+        if user:
+            query = query.filter(
+                (MaintenanceTask.department == user.department) |
+                (MaintenanceTask.assigned_to_user_id == user.user_id)
+            )
     elif department:
         query = query.filter(MaintenanceTask.department == department)
+
+    # Completed vs Pending filters
+    if completed is True or scope == "completed":
+        query = query.filter(MaintenanceTask.status.in_([
+            TaskStatus.RESOLVED, TaskStatus.CLOSED, TaskStatus.COMPLETED
+        ]))
+    elif completed is False or scope == "pending" or scope == "active":
+        query = query.filter(~MaintenanceTask.status.in_([
+            TaskStatus.RESOLVED, TaskStatus.CLOSED, TaskStatus.COMPLETED, TaskStatus.CANCELLED
+        ]))
+    elif scope == "approvals":
+        query = query.filter(MaintenanceTask.status.in_([
+            TaskStatus.NEW, TaskStatus.SUBMITTED, TaskStatus.UNDER_REVIEW, TaskStatus.ACKNOWLEDGED
+        ]))
+    elif scope == "approved":
+        query = query.filter(MaintenanceTask.status.in_([
+            TaskStatus.APPROVED, TaskStatus.SCHEDULED
+        ]))
 
     if status:
         query = query.filter(MaintenanceTask.status == status)
@@ -224,7 +279,14 @@ def create_task(
                 **_format_task_dict(existing)
             }
 
-    ast = db.query(Asset).filter(Asset.asset_id == payload.asset_id).first()
+    target_asset_id = payload.asset_id
+    if not target_asset_id:
+        dept_asset = db.query(Asset).filter(Asset.department == payload.department).first()
+        if not dept_asset:
+            dept_asset = db.query(Asset).first()
+        target_asset_id = dept_asset.asset_id if dept_asset else 1
+
+    ast = db.query(Asset).filter(Asset.asset_id == target_asset_id).first()
     traffic = ast.corridor.traffic_level if (ast and ast.corridor) else 3
 
     actual_fail_p = payload.failure_probability
@@ -252,7 +314,7 @@ def create_task(
     # Database transaction
     try:
         new_task = MaintenanceTask(
-            asset_id=payload.asset_id,
+            asset_id=target_asset_id,
             corridor_id=corridor_id,
             section_id=section_id,
             location_name=payload.location_name or (ast.location if ast else f"Section C2-0{section_id}"),
@@ -369,4 +431,293 @@ def submit_task(task_id: int, db: Session = Depends(get_db)):
     t.status = TaskStatus.NEW
     db.commit()
     db.refresh(t)
+    return _format_task_dict(t)
+
+class ApproveTaskRequest(BaseModel):
+    comments: Optional[str] = "Approved for corridor maintenance work."
+    assigned_to_user_id: Optional[int] = None
+
+class RejectTaskRequest(BaseModel):
+    reason: str
+
+class ClarifyTaskRequest(BaseModel):
+    comments: str
+
+class AssignTaskRequest(BaseModel):
+    assigned_to_user_id: int
+    instructions: Optional[str] = None
+
+class StartTaskWorkRequest(BaseModel):
+    notes: Optional[str] = "Field maintenance started."
+
+class ResolveTaskWorkRequest(BaseModel):
+    actual_duration_minutes: Optional[int] = 60
+    completion_notes: str
+    photo_evidence: Optional[str] = None
+
+class VerifyTaskRequest(BaseModel):
+    verification_notes: Optional[str] = "Work verified and track possession cleared."
+
+@router.post("/{task_id}/approve")
+def approve_task(
+    task_id: int,
+    payload: Optional[ApproveTaskRequest] = None,
+    user: User = Depends(require_role(["MANAGER", "ADMIN"])),
+    db: Session = Depends(get_db)
+):
+    t = db.query(MaintenanceTask).filter(MaintenanceTask.task_id == task_id).first()
+    if not t:
+        raise HTTPException(status_code=404, detail="Maintenance issue not found")
+
+    t.status = TaskStatus.APPROVED
+    if payload and payload.assigned_to_user_id:
+        t.assigned_to_user_id = payload.assigned_to_user_id
+        t.status = TaskStatus.SCHEDULED
+
+    audit = AuditLog(
+        action="ISSUE_APPROVED",
+        entity_type="TASK",
+        entity_id=t.reference_no or str(t.task_id),
+        user_id=user.employee_id,
+        details=f"Issue {t.reference_no} approved by {user.full_name} ({user.role}): {payload.comments if payload else 'Approved'}"
+    )
+    db.add(audit)
+    db.commit()
+    db.refresh(t)
+
+    DomainEventBus.publish(
+        db=db,
+        event_type="ISSUE_APPROVED",
+        aggregate_type="ISSUE",
+        aggregate_id=t.reference_no or str(t.task_id),
+        payload={"task_id": t.task_id, "status": t.status.value},
+        user_id=user.user_id,
+        target_role="ENGINEER",
+        title=f"Issue {t.reference_no} Approved",
+        message=f"Issue {t.reference_no} has been approved by {user.full_name}.",
+        reference_type="ISSUE",
+        reference_id=t.reference_no
+    )
+    return _format_task_dict(t)
+
+@router.post("/{task_id}/reject")
+def reject_task(
+    task_id: int,
+    payload: RejectTaskRequest,
+    user: User = Depends(require_role(["MANAGER", "ADMIN"])),
+    db: Session = Depends(get_db)
+):
+    t = db.query(MaintenanceTask).filter(MaintenanceTask.task_id == task_id).first()
+    if not t:
+        raise HTTPException(status_code=404, detail="Maintenance issue not found")
+
+    t.status = TaskStatus.CANCELLED
+    t.additional_notes = f"Rejection reason: {payload.reason}"
+
+    audit = AuditLog(
+        action="ISSUE_REJECTED",
+        entity_type="TASK",
+        entity_id=t.reference_no or str(t.task_id),
+        user_id=user.employee_id,
+        details=f"Issue {t.reference_no} rejected by {user.full_name}: {payload.reason}"
+    )
+    db.add(audit)
+    db.commit()
+    db.refresh(t)
+
+    DomainEventBus.publish(
+        db=db,
+        event_type="ISSUE_REJECTED",
+        aggregate_type="ISSUE",
+        aggregate_id=t.reference_no or str(t.task_id),
+        payload={"task_id": t.task_id, "status": "CANCELLED", "reason": payload.reason},
+        user_id=user.user_id,
+        target_role="FIELD_INSPECTOR",
+        title=f"Issue {t.reference_no} Rejected",
+        message=f"Issue {t.reference_no} was rejected: {payload.reason}",
+        reference_type="ISSUE",
+        reference_id=t.reference_no
+    )
+    return _format_task_dict(t)
+
+@router.post("/{task_id}/clarify")
+def clarify_task(
+    task_id: int,
+    payload: ClarifyTaskRequest,
+    user: User = Depends(require_role(["MANAGER", "ADMIN"])),
+    db: Session = Depends(get_db)
+):
+    t = db.query(MaintenanceTask).filter(MaintenanceTask.task_id == task_id).first()
+    if not t:
+        raise HTTPException(status_code=404, detail="Maintenance issue not found")
+
+    t.status = TaskStatus.UNDER_REVIEW
+    t.additional_notes = f"Clarification requested: {payload.comments}"
+    db.commit()
+    db.refresh(t)
+    return _format_task_dict(t)
+
+@router.post("/{task_id}/assign")
+def assign_task(
+    task_id: int,
+    payload: AssignTaskRequest,
+    user: User = Depends(require_role(["MANAGER", "ADMIN"])),
+    db: Session = Depends(get_db)
+):
+    t = db.query(MaintenanceTask).filter(MaintenanceTask.task_id == task_id).first()
+    if not t:
+        raise HTTPException(status_code=404, detail="Maintenance issue not found")
+
+    assigned_engineer = db.query(User).filter(User.user_id == payload.assigned_to_user_id).first()
+    if not assigned_engineer:
+        raise HTTPException(status_code=404, detail="Assigned user not found")
+
+    t.assigned_to_user_id = payload.assigned_to_user_id
+    t.status = TaskStatus.SCHEDULED
+    if payload.instructions:
+        t.additional_notes = f"Assignment Instructions: {payload.instructions}"
+
+    audit = AuditLog(
+        action="WORK_ASSIGNED",
+        entity_type="TASK",
+        entity_id=t.reference_no or str(t.task_id),
+        user_id=user.employee_id,
+        details=f"Issue {t.reference_no} assigned to {assigned_engineer.full_name} ({assigned_engineer.employee_id})"
+    )
+    db.add(audit)
+    db.commit()
+    db.refresh(t)
+
+    DomainEventBus.publish(
+        db=db,
+        event_type="WORK_ASSIGNED",
+        aggregate_type="TASK",
+        aggregate_id=t.reference_no or str(t.task_id),
+        payload={"task_id": t.task_id, "assigned_to_user_id": payload.assigned_to_user_id},
+        user_id=user.user_id,
+        target_role="ENGINEER",
+        title=f"Work Assigned: {t.reference_no}",
+        message=f"You have been assigned maintenance task {t.reference_no}.",
+        reference_type="ISSUE",
+        reference_id=t.reference_no
+    )
+    return _format_task_dict(t)
+
+@router.post("/{task_id}/start")
+def start_task(
+    task_id: int,
+    payload: Optional[StartTaskWorkRequest] = None,
+    user: User = Depends(require_role(["ENGINEER", "ADMIN"])),
+    db: Session = Depends(get_db)
+):
+    t = db.query(MaintenanceTask).filter(MaintenanceTask.task_id == task_id).first()
+    if not t:
+        raise HTTPException(status_code=404, detail="Maintenance issue not found")
+
+    t.status = TaskStatus.IN_PROGRESS
+    audit = AuditLog(
+        action="WORK_STARTED",
+        entity_type="TASK",
+        entity_id=t.reference_no or str(t.task_id),
+        user_id=user.employee_id,
+        details=f"Work started on {t.reference_no} by {user.full_name}"
+    )
+    db.add(audit)
+    db.commit()
+    db.refresh(t)
+
+    DomainEventBus.publish(
+        db=db,
+        event_type="WORK_STARTED",
+        aggregate_type="TASK",
+        aggregate_id=t.reference_no or str(t.task_id),
+        payload={"task_id": t.task_id, "status": "IN_PROGRESS"},
+        user_id=user.user_id,
+        target_role="OPERATIONS_MANAGER",
+        title=f"Work Started: {t.reference_no}",
+        message=f"{user.full_name} started work on {t.reference_no}.",
+        reference_type="ISSUE",
+        reference_id=t.reference_no
+    )
+    return _format_task_dict(t)
+
+@router.post("/{task_id}/resolve")
+def resolve_task(
+    task_id: int,
+    payload: ResolveTaskWorkRequest,
+    user: User = Depends(require_role(["ENGINEER", "ADMIN"])),
+    db: Session = Depends(get_db)
+):
+    t = db.query(MaintenanceTask).filter(MaintenanceTask.task_id == task_id).first()
+    if not t:
+        raise HTTPException(status_code=404, detail="Maintenance issue not found")
+
+    t.status = TaskStatus.RESOLVED
+    if payload.photo_evidence:
+        t.photo_evidence = payload.photo_evidence
+    if payload.completion_notes:
+        t.additional_notes = f"{t.additional_notes or ''}\nResolution: {payload.completion_notes}".strip()
+
+    audit = AuditLog(
+        action="WORK_RESOLVED",
+        entity_type="TASK",
+        entity_id=t.reference_no or str(t.task_id),
+        user_id=user.employee_id,
+        details=f"Work on {t.reference_no} marked resolved by {user.full_name}. Notes: {payload.completion_notes}"
+    )
+    db.add(audit)
+    db.commit()
+    db.refresh(t)
+
+    DomainEventBus.publish(
+        db=db,
+        event_type="WORK_RESOLVED",
+        aggregate_type="TASK",
+        aggregate_id=t.reference_no or str(t.task_id),
+        payload={"task_id": t.task_id, "status": "RESOLVED"},
+        user_id=user.user_id,
+        target_role="OPERATIONS_MANAGER",
+        title=f"Work Resolved: {t.reference_no}",
+        message=f"Work on {t.reference_no} was completed by {user.full_name}. Awaiting verification.",
+        reference_type="ISSUE",
+        reference_id=t.reference_no
+    )
+    return _format_task_dict(t)
+
+@router.post("/{task_id}/verify")
+def verify_task(
+    task_id: int,
+    payload: Optional[VerifyTaskRequest] = None,
+    user: User = Depends(require_role(["MANAGER", "ADMIN"])),
+    db: Session = Depends(get_db)
+):
+    t = db.query(MaintenanceTask).filter(MaintenanceTask.task_id == task_id).first()
+    if not t:
+        raise HTTPException(status_code=404, detail="Maintenance issue not found")
+
+    t.status = TaskStatus.CLOSED
+    audit = AuditLog(
+        action="ISSUE_CLOSED",
+        entity_type="TASK",
+        entity_id=t.reference_no or str(t.task_id),
+        user_id=user.employee_id,
+        details=f"Issue {t.reference_no} verified and closed by {user.full_name} ({user.role})"
+    )
+    db.add(audit)
+    db.commit()
+    db.refresh(t)
+
+    DomainEventBus.publish(
+        db=db,
+        event_type="ISSUE_CLOSED",
+        aggregate_type="ISSUE",
+        aggregate_id=t.reference_no or str(t.task_id),
+        payload={"task_id": t.task_id, "status": "CLOSED"},
+        user_id=user.user_id,
+        target_role="FIELD_INSPECTOR",
+        title=f"Issue {t.reference_no} Verified & Closed",
+        message=f"Issue {t.reference_no} has been verified and officially closed.",
+        reference_type="ISSUE",
+        reference_id=t.reference_no
+    )
     return _format_task_dict(t)
