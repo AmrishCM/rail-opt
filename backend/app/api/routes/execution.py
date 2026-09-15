@@ -25,9 +25,11 @@ class CompleteWorkRequest(BaseModel):
     issue_encountered: Optional[str] = "None. Work completed as per standard operating procedure."
 
 class ReportProblemRequest(BaseModel):
-    issue_category: str = "Additional defect"
+    issue_category: str = "Additional repair required"
     description: str
     is_critical: bool = False
+    additional_duration_minutes: Optional[int] = 35
+    current_location: Optional[str] = None
     photo_evidence: Optional[str] = None
 
 class EvidenceUploadRequest(BaseModel):
@@ -333,16 +335,39 @@ def report_problem(
     task = pa.task
     plan = pa.plan
 
-    # Save ExecutionIssue
+    # R.1 Check: Engineer can report issue only while assigned work is active (IN_PROGRESS)
+    er = db.query(ExecutionRecord).filter(ExecutionRecord.assignment_id == assignment_id).first()
+    is_active = False
+    if er and er.status == ExecutionStatus.IN_PROGRESS:
+        is_active = True
+    elif pa.status in ["IN_PROGRESS", "ACTIVE"]:
+        is_active = True
+
+    if not is_active:
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot report work issue: Engineer can report issues only while assigned work is actively IN_PROGRESS."
+        )
+
+    task_ref = getattr(task, "reference_no", f"WO-{pa.task_id}")
+    block = pa.block
+    sec = block.section if block else (task.asset.section if task and task.asset else None)
+    sec_name = sec.name if sec else f"C{task.section_id if task else 2}"
+    loc_name = request.current_location or (task.asset.location if task and task.asset else f"Section {sec_name}")
+
+    # Save ExecutionIssue with delay request
     exec_issue = ExecutionIssue(
         assignment_id=assignment_id,
         task_id=pa.task_id,
         issue_category=request.issue_category,
-        severity="CRITICAL" if request.is_critical else "WARNING",
-        is_critical=request.is_critical,
+        severity="CRITICAL" if (request.is_critical or (request.additional_duration_minutes or 0) >= 30) else "HIGH",
+        is_critical=request.is_critical or (request.additional_duration_minutes or 0) >= 30,
         description=request.description,
         photo_evidence=request.photo_evidence,
-        reported_by=user_name
+        reported_by=user_name,
+        current_location=loc_name,
+        additional_duration_minutes=request.additional_duration_minutes or 35,
+        status="PENDING_REPLAN"
     )
     db.add(exec_issue)
     db.flush()
@@ -350,99 +375,138 @@ def report_problem(
     critical_event_id = None
     event_number = None
 
-    if request.is_critical:
-        import uuid
-        crit_event = CriticalEvent(
-            event_number=f"CE-TMP-{uuid.uuid4().hex[:4].upper()}",
-            type="CRITICAL_FIELD_DEFECT",
-            asset_id=task.asset_id if task else 2,
-            corridor_id=plan.corridor_id if plan else 2,
-            section_id=task.section_id if task else 2,
-            severity=10,
-            description=f"CRITICAL PROBLEM during {plan.plan_number if plan else 'Work'}: {request.description}",
-            reported_by=user_name,
-            affected_plan_id=plan.plan_id if plan else None,
-            status="OPEN",
-            replan_required=True
+    import uuid
+    crit_event = CriticalEvent(
+        event_number=f"CE-TMP-{uuid.uuid4().hex[:4].upper()}",
+        type="CRITICAL_FIELD_DEFECT",
+        asset_id=task.asset_id if task else 2,
+        corridor_id=plan.corridor_id if plan else 2,
+        section_id=task.section_id if task else 2,
+        severity=10 if request.is_critical else 8,
+        description=f"Engineer Delay Request (+{exec_issue.additional_duration_minutes}m) on {task_ref}: {request.description}",
+        reported_by=user_name,
+        affected_plan_id=plan.plan_id if plan else None,
+        status="OPEN",
+        replan_required=True
+    )
+    db.add(crit_event)
+    db.flush()
+    crit_event.event_number = f"CE-2026-{crit_event.event_id:04d}"
+    critical_event_id = crit_event.event_id
+    event_number = crit_event.event_number
+
+    # Update assignment and task status
+    pa.status = "DELAY_REQUESTED"
+    if task:
+        task.status = TaskStatus.BLOCKED
+
+    if er:
+        er.status = ExecutionStatus.BLOCKED
+        er.issue_encountered = f"{request.issue_category}: {request.description} (+{exec_issue.additional_duration_minutes} min requested)"
+
+    db.commit()
+
+    # Broadcast to Operations Manager
+    start_str = pa.assigned_start_time.strftime("%H:%M") if pa.assigned_start_time else "14:30"
+    end_str = pa.assigned_end_time.strftime("%H:%M") if pa.assigned_end_time else "15:15"
+
+    try:
+        DomainEventBus.publish(
+            db=db,
+            event_type="ENGINEER_DELAY_REQUESTED",
+            aggregate_type="WORK_ORDER",
+            aggregate_id=task_ref,
+            payload={
+                "issue_id": exec_issue.issue_id,
+                "event_id": critical_event_id,
+                "event_number": event_number,
+                "work_order_id": task_ref,
+                "task_id": pa.task_id,
+                "assignment_id": assignment_id,
+                "plan_id": plan.plan_id if plan else None,
+                "plan_number": plan.plan_number if plan else "PLAN-2026-00001",
+                "engineer_name": user_name,
+                "current_plan_window": f"{start_str} → {end_str}",
+                "start_time": start_str,
+                "end_time": end_str,
+                "actual_progress": "In Progress",
+                "reported_problem": request.description,
+                "problem_category": request.issue_category,
+                "additional_duration_minutes": exec_issue.additional_duration_minutes,
+                "affected_track": sec_name,
+                "location": loc_name,
+                "replan_required": True
+            },
+            user_id=user.user_id if user else None,
+            target_role="OPERATIONS_MANAGER",
+            title=f"⚠️ Engineer Delay Request: {task_ref} (+{exec_issue.additional_duration_minutes}m)",
+            message=f"{user_name} reported: {request.description}. Section {sec_name}. AI Replan requested.",
+            reference_type="WORK_ORDER",
+            reference_id=task_ref
         )
-        db.add(crit_event)
-        db.flush()
-        crit_event.event_number = f"CE-2026-{crit_event.event_id:04d}"
-        critical_event_id = crit_event.event_id
-        event_number = crit_event.event_number
-
-        # Update assignment, task, and execution record status
-        pa.status = "BLOCKED"
-        if task:
-            task.status = TaskStatus.BLOCKED
-
-        er = db.query(ExecutionRecord).filter(ExecutionRecord.assignment_id == assignment_id).first()
-        if er:
-            er.status = ExecutionStatus.BLOCKED
-
-        db.commit()
-
-        # Broadcast CRITICAL_EVENT_CREATED
-        try:
-            DomainEventBus.publish(
-                db=db,
-                event_type="CRITICAL_EVENT_CREATED",
-                aggregate_type="CRITICAL_EVENT",
-                aggregate_id=event_number,
-                payload={
-                    "event_id": critical_event_id,
-                    "event_number": event_number,
-                    "affected_plan_id": plan.plan_id if plan else None,
-                    "affected_plan_number": plan.plan_number if plan else None,
-                    "task_id": pa.task_id,
-                    "description": request.description,
-                    "severity": 10,
-                    "replan_required": True,
-                    "reported_by": user_name
-                },
-                user_id=user.user_id if user else None,
-                target_role="OPERATIONS_MANAGER",
-                title=f"🚨 CRITICAL MAINTENANCE EVENT: {event_number}",
-                message=f"Plan {plan.plan_number if plan else ''} affected: {request.description}. Replanning required.",
-                reference_type="CRITICAL_EVENT",
-                reference_id=event_number
-            )
-        except Exception as bus_err:
-            print(f"[EVENT_BUS] CRITICAL_EVENT_CREATED error: {bus_err}")
-    else:
-        db.commit()
-        # Broadcast warning
-        try:
-            DomainEventBus.publish(
-                db=db,
-                event_type="ENGINEER_BLOCKED_TASK",
-                aggregate_type="TASK",
-                aggregate_id=str(pa.task_id),
-                payload={
-                    "assignment_id": assignment_id,
-                    "task_id": pa.task_id,
-                    "category": request.issue_category,
-                    "description": request.description,
-                    "reported_by": user_name
-                },
-                user_id=user.user_id if user else None,
-                target_role="OPERATIONS_MANAGER",
-                title="Field Work Problem Reported",
-                message=f"Issue on Task #{pa.task_id}: {request.description}",
-                reference_type="TASK",
-                reference_id=str(pa.task_id)
-            )
-        except Exception as bus_err:
-            print(f"[EVENT_BUS] ENGINEER_BLOCKED_TASK error: {bus_err}")
+    except Exception as bus_err:
+        print(f"[EVENT_BUS] ENGINEER_DELAY_REQUESTED error: {bus_err}")
 
     return {
         "success": True,
         "issue_id": exec_issue.issue_id,
-        "is_critical": request.is_critical,
+        "work_order_id": task_ref,
+        "engineer_name": user_name,
+        "is_critical": True,
+        "additional_duration_minutes": exec_issue.additional_duration_minutes,
         "critical_event_id": critical_event_id,
         "event_number": event_number,
-        "message": f"Problem reported successfully{' with critical replan alert' if request.is_critical else ''}."
+        "status": "PENDING_REPLAN",
+        "message": f"Delay issue reported (+{exec_issue.additional_duration_minutes} min). Manager notified for AI Replan."
     }
+
+@router.get("/delay-requests")
+def list_delay_requests(
+    user: Optional[User] = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Manager view of in-field engineer delay requests requiring AI Replan.
+    """
+    issues = db.query(ExecutionIssue).filter(
+        ExecutionIssue.status.in_(["PENDING_REPLAN", "OPEN"])
+    ).order_by(ExecutionIssue.created_at.desc()).all()
+
+    results = []
+    for iss in issues:
+        pa = iss.assignment
+        task = iss.task
+        plan = pa.plan if pa else None
+        ast = task.asset if task else None
+        sec = pa.block.section if (pa and pa.block and pa.block.section) else None
+
+        st_str = pa.assigned_start_time.strftime("%H:%M") if (pa and pa.assigned_start_time) else "14:30"
+        et_str = pa.assigned_end_time.strftime("%H:%M") if (pa and pa.assigned_end_time) else "15:15"
+        sec_code = f"C{sec.section_number}" if (sec and hasattr(sec, "section_number")) else (f"C{sec.section_id}" if sec else "C2")
+
+        results.append({
+            "issue_id": iss.issue_id,
+            "work_order_id": getattr(task, "reference_no", f"WO-{task.task_id if task else iss.task_id}"),
+            "task_id": iss.task_id,
+            "assignment_id": iss.assignment_id,
+            "plan_id": plan.plan_id if plan else None,
+            "plan_number": plan.plan_number if plan else "PLAN-2026-00001",
+            "engineer_name": iss.reported_by or "Engineer Arun",
+            "current_plan_window": f"{st_str} → {et_str}",
+            "current_start": st_str,
+            "current_end": et_str,
+            "actual_progress": "In Progress",
+            "reported_problem": iss.description,
+            "issue_category": iss.issue_category,
+            "additional_duration_minutes": iss.additional_duration_minutes or 35,
+            "affected_track": sec_code,
+            "location": iss.current_location or (ast.location if ast else f"Section {sec_code}"),
+            "created_at": iss.created_at.isoformat() if iss.created_at else None,
+            "status": iss.status
+        })
+
+    return results
+
 
 @router.post("/{assignment_id}/evidence")
 def upload_evidence(

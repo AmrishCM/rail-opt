@@ -6,10 +6,12 @@ import { MobileBottomNav } from './MobileBottomNav'
 import { EmergencyReplanModal } from '../../pages/emergency/EmergencyReplanModal'
 import {
   LayoutDashboard,
-  CheckCircle2,
-  Workflow,
+  Brain,
+  AlertTriangle,
   RotateCcw,
   Calendar,
+  Wrench,
+  Users,
   PhoneCall,
   BarChart3,
   Bell,
@@ -22,16 +24,18 @@ export const ManagerLayout: React.FC = () => {
   const { user } = useAuth()
   const [emergencyModalOpen, setEmergencyModalOpen] = useState(false)
 
+  // Part 7: Manager Primary Navigation
   const navItems = [
     { to: '/manager/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { to: '/manager/approvals', label: 'Issue Approval', icon: CheckCircle2, highlight: true },
-    { to: '/manager/status', label: 'Issue Status', icon: Workflow },
-    { to: '/manager/replan', label: 'Replanning', icon: RotateCcw },
+    { to: '/manager/planner', label: 'AI Maintenance Planner', icon: Brain, highlight: true },
+    { to: '/manager/approvals', label: 'Issues', icon: AlertTriangle },
     { to: '/manager/timetable', label: 'Timetable', icon: Calendar },
-    { to: '/manager/authorities', label: 'Authority Contact', icon: PhoneCall },
+    { to: '/manager/replan', label: 'Replanning', icon: RotateCcw },
+    { to: '/manager/status', label: 'Work Orders', icon: Wrench },
+    { to: '/manager/engineers', label: 'Engineers', icon: Users },
+    { to: '/manager/authorities', label: 'Authority Coordination', icon: PhoneCall },
     { to: '/manager/reports', label: 'Reports', icon: BarChart3 },
     { to: '/manager/notifications', label: 'Notifications', icon: Bell },
-    { to: '/profile', label: 'Profile', icon: User },
   ]
 
   return (

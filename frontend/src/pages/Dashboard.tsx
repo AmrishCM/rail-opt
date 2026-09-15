@@ -67,30 +67,98 @@ export const Dashboard: React.FC = () => {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Top Banner with Operational Status */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-        <div>
-          <div className="flex items-center space-x-2">
-            <h1 className="text-2xl font-black tracking-tight text-slate-900">
-              Railway Operations Command Center
-            </h1>
-            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
-              LIVE OPTIMIZATION
-            </span>
-          </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Indian Railways Automatic Maintenance Block Planning & Asset Availability Platform (SIH 2026 Prototype)
-          </p>
-        </div>
+      {/* Clean Operational Hero (Part 27 & Part 28) */}
+      <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+          {/* Left Column: Title, Description, Actions */}
+          <div className="lg:col-span-7 space-y-4">
+            <div>
+              <span className="text-[11px] font-extrabold uppercase tracking-wider text-rail-maroon font-mono">
+                RAILWAY OPERATIONS CONTROL
+              </span>
+              <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mt-1">
+                AI-Assisted Maintenance Planning <br className="hidden sm:inline" />
+                and Dynamic Block Scheduling
+              </h1>
+            </div>
 
-        <div className="flex items-center space-x-3">
-          <Link
-            to="/planner"
-            className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-sm transition-all"
-          >
-            <Cpu className="w-4 h-4 text-blue-400" />
-            <span>Open Optimization Room</span>
-          </Link>
+            <p className="text-sm text-slate-600 max-w-xl">
+              Monitor issues, optimize maintenance windows, and coordinate engineering work around train operations.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-3 pt-1">
+              <Link
+                to="/planner"
+                className="px-5 py-2.5 bg-rail-maroon hover:bg-rail-maroon-dark text-white rounded-lg font-bold text-xs shadow-xs transition-colors"
+              >
+                [ OPEN OPERATIONS ]
+              </Link>
+              <Link
+                to="/corridors/2"
+                className="px-5 py-2.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg font-bold text-xs transition-colors"
+              >
+                [ VIEW TIMETABLE ]
+              </Link>
+            </div>
+          </div>
+
+          {/* Right Column: Restrained Operational Visualization */}
+          <div className="lg:col-span-5 bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-2.5 font-mono text-xs">
+            <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-2">
+              Corridor Possession Preview
+            </div>
+
+            {/* Track C1 */}
+            <div className="space-y-1">
+              <div className="flex justify-between text-[11px] text-slate-600">
+                <span className="font-bold text-slate-800">C1</span>
+                <span>Track 1 (Up Line)</span>
+              </div>
+              <div className="relative h-6 bg-slate-200 rounded overflow-hidden">
+                <div className="absolute left-[15%] w-[35%] h-full bg-slate-800 text-white text-[10px] font-bold flex items-center justify-center rounded">
+                  TRAIN 12674
+                </div>
+                <div className="absolute left-[60%] w-[30%] h-full bg-rail-maroon text-white text-[10px] font-bold flex items-center justify-center rounded">
+                  REPAIR WO-1024
+                </div>
+              </div>
+            </div>
+
+            {/* Track C2 */}
+            <div className="space-y-1">
+              <div className="flex justify-between text-[11px] text-slate-600">
+                <span className="font-bold text-slate-800">C2</span>
+                <span>Track 2 (Down Line)</span>
+              </div>
+              <div className="relative h-6 bg-slate-200 rounded overflow-hidden">
+                <div className="absolute left-[10%] w-[25%] h-full bg-rail-maroon text-white text-[10px] font-bold flex items-center justify-center rounded">
+                  REPAIR WO-1025
+                </div>
+                <div className="absolute left-[45%] w-[45%] h-full bg-slate-800 text-white text-[10px] font-bold flex items-center justify-center rounded">
+                  TRAIN 12675
+                </div>
+              </div>
+            </div>
+
+            {/* Track C3 */}
+            <div className="space-y-1">
+              <div className="flex justify-between text-[11px] text-slate-600">
+                <span className="font-bold text-slate-800">C3</span>
+                <span>Loop Line</span>
+              </div>
+              <div className="relative h-6 bg-slate-200 rounded overflow-hidden">
+                <div className="absolute left-[5%] w-[30%] h-full bg-slate-800 text-white text-[10px] font-bold flex items-center justify-center rounded">
+                  TRAIN 06012
+                </div>
+                <div className="absolute left-[40%] w-[25%] h-full bg-amber-600 text-white text-[10px] font-bold flex items-center justify-center rounded">
+                  INSPECTION
+                </div>
+                <div className="absolute left-[70%] w-[25%] h-full bg-slate-800 text-white text-[10px] font-bold flex items-center justify-center rounded">
+                  TRAIN 12676
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

@@ -143,25 +143,20 @@ export const Header: React.FC<HeaderProps> = ({ onOpenEmergencyModal }) => {
     <>
       {/* Top Navbar */}
       <header className="bg-slate-900 border-b border-slate-800 text-slate-100 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between h-14">
           {/* Brand Logo & Product Name */}
           <div className="flex items-center space-x-3">
             <Link to={getRoleDashboardPath(user?.role)} className="flex items-center space-x-2.5">
-              <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20 font-black text-base tracking-tighter">
-                <Train className="w-5 h-5 text-white" />
+              <div className="w-8 h-8 rounded bg-rail-maroon flex items-center justify-center text-white font-black text-sm tracking-tighter">
+                <Train className="w-4 h-4 text-white" />
               </div>
-              <div>
-                <div className="flex items-center space-x-2">
-                  <span className="font-black text-lg tracking-tight text-white leading-none">
-                    RailOpt<span className="text-blue-400">-AI</span>
-                  </span>
-                  <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-400/20">
-                    SIH 2026
-                  </span>
-                </div>
-                <p className="text-[10px] text-slate-400 font-medium hidden sm:block">
-                  Intelligent Railway Maintenance Planning & Coordination
-                </p>
+              <div className="flex items-center space-x-2">
+                <span className="font-black text-base tracking-tight text-white leading-none">
+                  RAILOPT
+                </span>
+                <span className="hidden sm:inline-block text-xs font-semibold text-slate-400 pl-2 border-l border-slate-700">
+                  Operations <span className="text-slate-600">|</span> Planning <span className="text-slate-600">|</span> Safety
+                </span>
               </div>
             </Link>
           </div>

@@ -4,8 +4,25 @@ from .api.routes.api_router import api_router
 from .db.session import Base, engine
 from . import models
 
+from sqlalchemy import text
+
 # Create database tables
 Base.metadata.create_all(bind=engine)
+
+# Ensure dynamic execution_issues columns exist in SQLite
+try:
+    with engine.connect() as conn:
+        cols = [r[1] for r in conn.execute(text("PRAGMA table_info(execution_issues)")).fetchall()]
+        if cols:
+            if "current_location" not in cols:
+                conn.execute(text("ALTER TABLE execution_issues ADD COLUMN current_location VARCHAR(100)"))
+            if "additional_duration_minutes" not in cols:
+                conn.execute(text("ALTER TABLE execution_issues ADD COLUMN additional_duration_minutes INTEGER DEFAULT 30"))
+            if "status" not in cols:
+                conn.execute(text("ALTER TABLE execution_issues ADD COLUMN status VARCHAR(50) DEFAULT 'PENDING_REPLAN'"))
+            conn.commit()
+except Exception as mig_err:
+    print(f"[DB_MIGRATION] Migration note: {mig_err}")
 
 app = FastAPI(
     title="RailOpt-AI API",

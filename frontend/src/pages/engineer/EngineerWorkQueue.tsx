@@ -30,12 +30,51 @@ export const EngineerWorkQueue: React.FC<EngineerWorkQueueProps> = ({ initialFil
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'ALL' | 'PENDING' | 'IN_PROGRESS' | 'COMPLETED'>(initialFilter)
   const [resolveModalTask, setResolveModalTask] = useState<any | null>(null)
+  const [reportProblemTask, setReportProblemTask] = useState<any | null>(null)
+  const [problemCategory, setProblemCategory] = useState('Unexpected damage')
+  const [problemDescription, setProblemDescription] = useState('')
+  const [problemDuration, setProblemDuration] = useState(35)
+  const [problemLocation, setProblemLocation] = useState('Section C2 (KM 42.8)')
+  const [replanApprovedNotice, setReplanApprovedNotice] = useState<any | null>(null)
   const [durationMinutes, setDurationMinutes] = useState(60)
   const [completionNotes, setCompletionNotes] = useState('')
   const [photoEvidence, setPhotoEvidence] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [actionSuccess, setActionSuccess] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
+
+  const handleReportProblemSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!reportProblemTask) return
+    if (!problemDescription.trim()) {
+      setActionError('Problem description is required.')
+      return
+    }
+
+    setSubmitting(true)
+    setActionError(null)
+    setActionSuccess(null)
+    try {
+      const assignmentId = reportProblemTask.assignment_id || reportProblemTask.task_id || 1
+      const res = await (await import('../../services/api')).apiClient.post(`/execution/${assignmentId}/report-problem`, {
+        issue_category: problemCategory,
+        description: problemDescription,
+        is_critical: true,
+        additional_duration_minutes: Number(problemDuration),
+        current_location: problemLocation
+      })
+      setActionSuccess(
+        `Work issue reported (+${problemDuration} min requested). Operations Manager notified for AI Replan.`
+      )
+      setReportProblemTask(null)
+      setProblemDescription('')
+      await loadTasks()
+    } catch (err: any) {
+      setActionError(err?.response?.data?.detail || 'Failed to report work issue.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
 
   const loadTasks = async () => {
     setLoading(true)
@@ -191,17 +230,38 @@ export const EngineerWorkQueue: React.FC<EngineerWorkQueueProps> = ({ initialFil
         }
         if (t.status === 'IN_PROGRESS') {
           return (
-            <button
-              onClick={() => {
-                setResolveModalTask(t)
-                setCompletionNotes('')
-                setPhotoEvidence(null)
-              }}
-              className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs transition-colors min-h-[36px]"
-            >
-              <Check className="w-3.5 h-3.5" />
-              <span>Complete Work</span>
-            </button>
+            <div className="flex items-center space-x-1.5">
+              <button
+                onClick={() => {
+                  setResolveModalTask(t)
+                  setCompletionNotes('')
+                  setPhotoEvidence(null)
+                }}
+                className="inline-flex items-center space-x-1 px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs transition-colors min-h-[36px]"
+              >
+                <Check className="w-3.5 h-3.5" />
+                <span>Complete</span>
+              </button>
+              <button
+                onClick={() => {
+                  setReportProblemTask(t)
+                  setProblemLocation(t.location_name || 'Section C2 (KM 42.8)')
+                  setProblemDescription('')
+                }}
+                className="inline-flex items-center space-x-1 px-2.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-black text-xs transition-colors min-h-[36px]"
+              >
+                <AlertTriangle className="w-3.5 h-3.5" />
+                <span>[ Report Work Issue ]</span>
+              </button>
+            </div>
+          )
+        }
+        if (t.status === 'DELAY_REQUESTED') {
+          return (
+            <span className="text-[11px] text-amber-400 font-bold flex items-center space-x-1 bg-amber-500/10 px-2 py-1 rounded border border-amber-500/30">
+              <Clock className="w-3.5 h-3.5 animate-spin" />
+              <span>Pending Replan Approval</span>
+            </span>
           )
         }
         return (
@@ -258,13 +318,26 @@ export const EngineerWorkQueue: React.FC<EngineerWorkQueueProps> = ({ initialFil
             <span>Start Work</span>
           </button>
         ) : t.status === 'IN_PROGRESS' ? (
-          <button
-            onClick={() => setResolveModalTask(t)}
-            className="px-4 py-2.5 rounded-xl bg-emerald-600 text-white font-black text-xs min-h-[44px] flex items-center space-x-1"
-          >
-            <Check className="w-4 h-4" />
-            <span>Complete</span>
-          </button>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => {
+                setReportProblemTask(t)
+                setProblemLocation(t.location_name || 'Section C2 (KM 42.8)')
+                setProblemDescription('')
+              }}
+              className="px-3 py-2 rounded-xl bg-amber-600 text-white font-black text-xs min-h-[44px] flex items-center space-x-1"
+            >
+              <AlertTriangle className="w-3.5 h-3.5" />
+              <span>Report Issue</span>
+            </button>
+            <button
+              onClick={() => setResolveModalTask(t)}
+              className="px-3 py-2 rounded-xl bg-emerald-600 text-white font-black text-xs min-h-[44px] flex items-center space-x-1"
+            >
+              <Check className="w-4 h-4" />
+              <span>Complete</span>
+            </button>
+          </div>
         ) : (
           <span className="text-xs text-emerald-400 font-bold">Resolved</span>
         )}
@@ -415,6 +488,125 @@ export const EngineerWorkQueue: React.FC<EngineerWorkQueueProps> = ({ initialFil
                 className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs min-h-[44px] flex items-center justify-center space-x-1"
               >
                 {submitting ? 'Recording...' : 'Submit & Resolve'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Report Problem / Interruption Modal (Part 9) */}
+      {reportProblemTask && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <form
+            onSubmit={handleReportProblemSubmit}
+            className="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl text-slate-100"
+          >
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center space-x-2">
+                <AlertTriangle className="w-5 h-5 text-amber-400" />
+                <h3 className="text-sm font-black text-white">Report Work Issue & Request Replan</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setReportProblemTask(null)}
+                className="text-slate-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Auto-associated Work Order Metadata (Part 9) */}
+            <div className="bg-slate-800/80 p-3 rounded-xl border border-slate-700/80 text-xs space-y-1 font-mono">
+              <div className="flex justify-between">
+                <span className="text-slate-400">Work Order:</span>
+                <span className="text-amber-400 font-bold">
+                  {reportProblemTask.reference_no || `WO-${reportProblemTask.task_id}`}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Assigned Engineer:</span>
+                <span className="text-slate-200">{user?.full_name || 'Engineer Arun'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Current Window:</span>
+                <span className="text-slate-200">14:30 → 15:15</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Track / Section:</span>
+                <span className="text-slate-200">Section C2</span>
+              </div>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="block text-slate-300 font-bold mb-1">Issue Category *</label>
+                <select
+                  value={problemCategory}
+                  onChange={(e) => setProblemCategory(e.target.value)}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white"
+                >
+                  <option value="Unexpected damage">Unexpected damage</option>
+                  <option value="Required part unavailable">Required part unavailable</option>
+                  <option value="Additional repair required">Additional repair required</option>
+                  <option value="Access blocked">Access blocked</option>
+                  <option value="Safety concern">Safety concern</option>
+                  <option value="Work taking longer than estimated">Work taking longer than estimated</option>
+                  <option value="Equipment failure">Equipment failure</option>
+                  <option value="Track unavailable">Track unavailable</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-bold mb-1">Detailed Problem Description *</label>
+                <textarea
+                  rows={3}
+                  value={problemDescription}
+                  onChange={(e) => setProblemDescription(e.target.value)}
+                  required
+                  placeholder="e.g. Replacement switch motor armature unavailable from depot. Requires 35 additional minutes..."
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-white focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-300 font-bold mb-1">Estimated Extra (min) *</label>
+                  <input
+                    type="number"
+                    min={5}
+                    max={180}
+                    value={problemDuration}
+                    onChange={(e) => setProblemDuration(Number(e.target.value))}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-300 font-bold mb-1">Current Location</label>
+                  <input
+                    type="text"
+                    value={problemLocation}
+                    onChange={(e) => setProblemLocation(e.target.value)}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setReportProblemTask(null)}
+                className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={submitting}
+                className="flex-1 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-black text-xs min-h-[44px]"
+              >
+                {submitting ? 'Submitting...' : 'Submit Issue & Replan'}
               </button>
             </div>
           </form>

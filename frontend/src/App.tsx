@@ -27,10 +27,11 @@ import InspectorCompletedIssues from './pages/inspector/InspectorCompletedIssues
 import InspectorTimetable from './pages/inspector/InspectorTimetable'
 
 // Manager Pages
-import ManagerDashboard from './pages/manager/ManagerDashboard'
+import { ManagerDashboard } from './pages/manager/ManagerDashboard'
+import { ManagerAIPlanner } from './pages/manager/ManagerAIPlanner'
 import ManagerIssueApproval from './pages/manager/ManagerIssueApproval'
 import ManagerIssueStatus from './pages/manager/ManagerIssueStatus'
-import ManagerReplanView from './pages/manager/ManagerReplanView'
+import { ManagerReplanView } from './pages/manager/ManagerReplanView'
 import ManagerAuthorityContact from './pages/manager/ManagerAuthorityContact'
 import ManagerTimetable from './pages/manager/ManagerTimetable'
 
@@ -137,10 +138,12 @@ function App() {
               >
                 <Route index element={<Navigate to="/manager/dashboard" replace />} />
                 <Route path="dashboard" element={<ManagerDashboard />} />
+                <Route path="planner" element={<ManagerAIPlanner />} />
                 <Route path="approvals" element={<ManagerIssueApproval />} />
                 <Route path="status" element={<ManagerIssueStatus />} />
                 <Route path="replan" element={<ManagerReplanView />} />
                 <Route path="timetable" element={<ManagerTimetable />} />
+                <Route path="engineers" element={<Analytics />} />
                 <Route path="authorities" element={<ManagerAuthorityContact />} />
                 <Route path="reports" element={<Analytics />} />
                 <Route path="notifications" element={<Analytics />} />

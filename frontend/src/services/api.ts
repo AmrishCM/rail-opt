@@ -1,6 +1,6 @@
 import { apiClient as api, API_BASE } from '../lib/apiClient'
 
-export { api, API_BASE }
+export { api, api as apiClient, API_BASE }
 
 // Authentication & Users
 export async function loginUser(credentials: { username: string; password: string }) {
@@ -121,6 +121,8 @@ export async function fetchTasks(params?: {
   const res = await api.get('/tasks', { params })
   return res.data
 }
+
+export const fetchMaintenanceTasks = fetchTasks
 
 export async function fetchTask(id: number | string) {
   const res = await api.get(`/tasks/${id}`)

@@ -173,17 +173,67 @@ def get_timeline_data(
                 overlap_end = min(m["end_minute"], tr["end_minute"])
                 if overlap_start < overlap_end:
                     # Overlap detected
-                    conflict_msg = f"Train {tr['train_number']} conflicts with maintenance {m['label']} on Section {m['section_name']} ({_format_time_str(None)} overlap: {overlap_end - overlap_start}m)"
+                    m_time = f"{m['start_time']}–{m['end_time']}"
+                    tr_time = f"{tr['start_time']}–{tr['end_time']}"
+                    conflict_desc = f"Track {m['section_name']} | Maintenance: {m_time} | Train {tr['train_number']}: {tr_time} ({overlap_end - overlap_start}m overlap)"
                     conflicts.append({
+                        "id": f"CONF-{m['id']}-{tr['id']}",
                         "maintenance_id": m["id"],
+                        "maintenance_label": m["label"],
+                        "maintenance_time": m_time,
+                        "task_id": m.get("task_id"),
+                        "plan_id": m.get("plan_id"),
                         "train_id": tr["id"],
+                        "train_number": tr["train_number"],
+                        "train_time": tr_time,
+                        "track_name": m["section_name"],
                         "section_id": m["section_id"],
                         "section_name": m["section_name"],
                         "overlap_minutes": overlap_end - overlap_start,
-                        "description": conflict_msg
+                        "severity": "CRITICAL" if (overlap_end - overlap_start) >= 15 else "WARNING",
+                        "description": conflict_desc,
+                        "can_replan": True
                     })
                     m["has_conflict"] = True
                     tr["has_conflict"] = True
+
+    # 5. Build Track / Section Gantt Rows (C1, C2, C3, etc.)
+    db_sections = db.query(Section).filter(Section.corridor_id == corridor_id).order_by(Section.section_number.asc()).all()
+    if not db_sections:
+        # Fallback to distinct section_ids found
+        sec_ids = sorted(list(set([m["section_id"] for m in maintenance_items] + [t["section_id"] for t in train_items] + [1, 2, 3])))
+        section_rows = []
+        for sid in sec_ids:
+            s_code = f"C{sid}"
+            s_trains = [t for t in train_items if t["section_id"] == sid]
+            s_maint = [m for m in maintenance_items if m["section_id"] == sid]
+            s_conflicts = [c for c in conflicts if c["section_id"] == sid]
+            section_rows.append({
+                "section_id": sid,
+                "code": s_code,
+                "name": f"Track {s_code}",
+                "trains": s_trains,
+                "maintenance": s_maint,
+                "conflicts": s_conflicts,
+                "has_conflict": len(s_conflicts) > 0
+            })
+    else:
+        section_rows = []
+        for sec in db_sections:
+            sid = sec.section_id
+            s_code = f"C{sec.section_number or sid}"
+            s_trains = [t for t in train_items if t["section_id"] == sid]
+            s_maint = [m for m in maintenance_items if m["section_id"] == sid]
+            s_conflicts = [c for c in conflicts if c["section_id"] == sid]
+            section_rows.append({
+                "section_id": sid,
+                "code": s_code,
+                "name": sec.name or f"Track {s_code}",
+                "trains": s_trains,
+                "maintenance": s_maint,
+                "conflicts": s_conflicts,
+                "has_conflict": len(s_conflicts) > 0
+            })
 
     return {
         "corridor_id": corridor_id,
@@ -192,6 +242,7 @@ def get_timeline_data(
         "time_start": "00:00",
         "time_end": "24:00",
         "total_minutes": 1440,
+        "sections": section_rows,
         "tracks": {
             "trains": train_items,
             "maintenance": maintenance_items,
@@ -206,6 +257,7 @@ def get_timeline_data(
             "maintenance_count": len(maintenance_items),
             "blocks_count": len(block_items),
             "conflicts_count": len(conflicts),
+            "sections_count": len(section_rows),
             "active_plans_count": len([p for p in active_plans if p.status != PlanStatus.SUPERSEDED])
         }
     }

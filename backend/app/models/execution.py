@@ -67,12 +67,16 @@ class ExecutionIssue(Base):
     description = Column(Text, nullable=False)
     photo_evidence = Column(Text, nullable=True)
     reported_by = Column(String(100), nullable=True)
+    current_location = Column(String(100), nullable=True)  # e.g. "Section C2 (KM 42.8)"
+    additional_duration_minutes = Column(Integer, default=30, nullable=True)  # e.g. +35 mins
+    status = Column(String(50), default="PENDING_REPLAN")  # PENDING_REPLAN, REPLAN_APPROVED, REJECTED, RESOLVED
     created_at = Column(DateTime, server_default=func.now())
 
     task = relationship("MaintenanceTask")
+    assignment = relationship("PlanAssignment")
 
     def __repr__(self):
-        return f"<ExecutionIssue(id={self.issue_id}, category='{self.issue_category}', critical={self.is_critical})>"
+        return f"<ExecutionIssue(id={self.issue_id}, category='{self.issue_category}', delay=+{self.additional_duration_minutes}m, status='{self.status}')>"
 
 class DomainEvent(Base):
     __tablename__ = "domain_events"
