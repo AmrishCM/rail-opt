@@ -3,16 +3,16 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { fetchTasks } from '../../services/api'
 import { DataTable, ColumnDef } from '../../components/common/DataTable'
+import { StatCard, StatsGrid } from '../../components/common/StatCard'
+import { StatusBadge, PriorityBadge } from '../../components/common/RailwayBadges'
 import {
-  PlusCircle,
-  Filter,
+  Plus,
   Search,
-  CheckCircle2,
-  Clock,
   Eye,
   AlertTriangle,
-  RefreshCw,
-  MapPin
+  MapPin,
+  Filter,
+  Layers
 } from 'lucide-react'
 
 export const InspectorIssuesList: React.FC = () => {
@@ -40,12 +40,15 @@ export const InspectorIssuesList: React.FC = () => {
     loadTasks()
   }, [user])
 
-  const filteredTasks = tasks.filter(t => {
+  const filteredTasks = tasks.filter((t) => {
     if (statusFilter !== 'ALL') {
-      if (statusFilter === 'UNDER_REVIEW' && !['NEW', 'SUBMITTED', 'UNDER_REVIEW'].includes(t.status)) return false
-      if (statusFilter === 'APPROVED' && !['APPROVED', 'SCHEDULED'].includes(t.status)) return false
+      if (statusFilter === 'UNDER_REVIEW' && !['NEW', 'SUBMITTED', 'UNDER_REVIEW'].includes(t.status))
+        return false
+      if (statusFilter === 'APPROVED' && !['APPROVED', 'SCHEDULED', 'PLAN_READY'].includes(t.status))
+        return false
       if (statusFilter === 'IN_PROGRESS' && t.status !== 'IN_PROGRESS') return false
-      if (statusFilter === 'RESOLVED' && !['RESOLVED', 'CLOSED'].includes(t.status)) return false
+      if (statusFilter === 'RESOLVED' && !['RESOLVED', 'CLOSED', 'VERIFIED'].includes(t.status))
+        return false
     }
     if (search.trim()) {
       const q = search.toLowerCase()
@@ -58,13 +61,19 @@ export const InspectorIssuesList: React.FC = () => {
     return true
   })
 
+  // Stat derivations
+  const totalCount = tasks.length
+  const activeCount = tasks.filter((t) => t.status !== 'CLOSED' && t.status !== 'REJECTED' && t.status !== 'VERIFIED').length
+  const underReviewCount = tasks.filter((t) => ['NEW', 'SUBMITTED', 'UNDER_REVIEW'].includes(t.status)).length
+  const approvedCount = tasks.filter((t) => ['APPROVED', 'SCHEDULED', 'PLAN_READY'].includes(t.status)).length
+
   const columns: ColumnDef<any>[] = [
     {
       key: 'reference_no',
       header: 'Issue ID',
       priority: 'essential',
       render: (t) => (
-        <span className="font-mono font-black text-blue-400">
+        <span className="font-mono font-bold text-zinc-200">
           {t.reference_no || `TASK-${t.task_id}`}
         </span>
       )
@@ -75,8 +84,8 @@ export const InspectorIssuesList: React.FC = () => {
       priority: 'essential',
       render: (t) => (
         <div className="space-y-0.5">
-          <div className="font-bold text-white text-xs">{t.defect_type || t.description?.slice(0, 30)}</div>
-          <div className="text-[11px] text-slate-400 line-clamp-1">{t.description}</div>
+          <div className="font-medium text-zinc-200 text-xs">{t.defect_type || t.description?.slice(0, 32)}</div>
+          <div className="text-[11px] text-zinc-400 line-clamp-1">{t.description}</div>
         </div>
       )
     },
@@ -85,9 +94,9 @@ export const InspectorIssuesList: React.FC = () => {
       header: 'Location / Track',
       priority: 'medium',
       render: (t) => (
-        <div className="text-xs">
-          <div className="text-slate-200 font-semibold">{t.location_name || 'Section C2-02'}</div>
-          <div className="text-[10px] text-slate-400">Track: {t.track || '2'}</div>
+        <div className="text-xs space-y-0.5">
+          <div className="text-zinc-300 font-medium">{t.location_name || 'Section C2-02'}</div>
+          <div className="text-[11px] text-zinc-500 font-mono">Track: {t.track || '2'}</div>
         </div>
       )
     },
@@ -95,31 +104,13 @@ export const InspectorIssuesList: React.FC = () => {
       key: 'severity',
       header: 'Severity',
       priority: 'medium',
-      render: (t) => (
-        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
-          t.severity >= 4 ? 'bg-red-500/20 text-red-400' : t.severity === 3 ? 'bg-amber-500/20 text-amber-400' : 'bg-blue-500/20 text-blue-400'
-        }`}>
-          Sev {t.severity || '3'}/5
-        </span>
-      )
+      render: (t) => <PriorityBadge level={t.severity || '3'} />
     },
     {
       key: 'status',
-      header: 'Workflow Status',
+      header: 'Workflow State',
       priority: 'essential',
-      render: (t) => (
-        <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${
-          t.status === 'RESOLVED' || t.status === 'CLOSED'
-            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-            : t.status === 'APPROVED' || t.status === 'SCHEDULED'
-            ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
-            : t.status === 'IN_PROGRESS'
-            ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-            : 'bg-slate-700 text-slate-300'
-        }`}>
-          {t.status?.replace('_', ' ')}
-        </span>
-      )
+      render: (t) => <StatusBadge status={t.status} />
     },
     {
       key: 'actions',
@@ -128,109 +119,133 @@ export const InspectorIssuesList: React.FC = () => {
       render: (t) => (
         <Link
           to={`/tasks/${t.task_id}`}
-          className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs border border-slate-700 transition-colors"
+          className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-medium transition-colors active:translate-y-[1px]"
         >
-          <Eye className="w-3.5 h-3.5" />
-          <span>View</span>
+          <Eye className="w-3.5 h-3.5 text-zinc-400" strokeWidth={1.5} />
+          <span>Details</span>
         </Link>
       )
     }
   ]
 
   const renderMobileCard = (t: any) => (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-xs">
+    <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 space-y-3">
       <div className="flex items-center justify-between">
-        <span className="font-mono text-xs font-black text-blue-400">
+        <span className="font-mono font-bold text-xs text-zinc-200">
           {t.reference_no || `TASK-${t.task_id}`}
         </span>
-        <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${
-          t.status === 'RESOLVED' || t.status === 'CLOSED'
-            ? 'bg-emerald-500/20 text-emerald-300'
-            : t.status === 'APPROVED' || t.status === 'SCHEDULED'
-            ? 'bg-blue-500/20 text-blue-300'
-            : t.status === 'IN_PROGRESS'
-            ? 'bg-amber-500/20 text-amber-300'
-            : 'bg-slate-800 text-slate-400'
-        }`}>
-          {t.status?.replace('_', ' ')}
-        </span>
+        <StatusBadge status={t.status} />
       </div>
 
       <div className="space-y-1">
-        <p className="font-bold text-white text-xs">{t.defect_type || t.description}</p>
-        <div className="flex items-center space-x-2 text-[11px] text-slate-400">
-          <MapPin className="w-3 h-3 text-slate-500" />
-          <span>{t.location_name || 'Salem–Erode'} • Track {t.track || '2'}</span>
+        <div className="font-medium text-zinc-100 text-xs">{t.defect_type || t.description}</div>
+        <p className="text-[11px] text-zinc-400 line-clamp-2">{t.description}</p>
+        <div className="flex items-center space-x-3 text-[11px] text-zinc-500 pt-1">
+          <span className="flex items-center space-x-1">
+            <MapPin className="w-3 h-3 text-zinc-400" strokeWidth={1.5} />
+            <span>{t.location_name || 'Salem–Erode'} (Track {t.track || '2'})</span>
+          </span>
           <span>•</span>
-          <span className="text-amber-400 font-semibold">Sev {t.severity || 3}</span>
+          <PriorityBadge level={t.severity || '3'} showIcon={false} />
         </div>
       </div>
 
-      <div className="pt-2 border-t border-slate-800 flex justify-between items-center">
-        <span className="text-[10px] text-slate-500">
+      <div className="pt-2 border-t border-zinc-800 flex justify-between items-center text-xs">
+        <span className="text-[11px] text-zinc-500 font-mono">
           {t.created_at ? new Date(t.created_at).toLocaleDateString() : 'Today'}
         </span>
         <Link
           to={`/tasks/${t.task_id}`}
-          className="inline-flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-slate-800 text-white font-bold text-xs border border-slate-700 min-h-[44px]"
+          className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-medium"
         >
-          <Eye className="w-4 h-4" />
-          <span>View Issue</span>
+          <Eye className="w-3.5 h-3.5" strokeWidth={1.5} />
+          <span>View Details</span>
         </Link>
       </div>
     </div>
   )
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm">
+    <div className="p-6 lg:p-8 max-w-[1400px] mx-auto space-y-6">
+      {/* Header with Title and Primary CTA */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-zinc-800">
         <div>
-          <h1 className="text-xl sm:text-2xl font-black text-white">My Reported Issues</h1>
-          <p className="text-xs text-slate-400 mt-0.5">
-            Track defects logged by {user?.full_name || 'you'} across section {user?.section_code || 'C2-02'}
+          <h1 className="text-xl font-bold text-zinc-100 tracking-tight">My Reported Issues</h1>
+          <p className="text-xs text-zinc-400 mt-1">
+            {user?.section_code || 'Salem–Erode (C2-02)'} • Active defect queue & maintenance scheduling records
           </p>
         </div>
+
         <Link
           to="/inspector/report-issue"
-          className="inline-flex items-center justify-center space-x-2 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs transition-all shadow-md shadow-amber-500/20 shrink-0 min-h-[44px]"
+          className="inline-flex items-center space-x-2 px-3.5 py-2 rounded-md bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors shadow-none active:translate-y-[1px] shrink-0"
         >
-          <PlusCircle className="w-4 h-4 text-slate-950" />
-          <span>+ Report New Issue</span>
+          <Plus className="w-4 h-4" strokeWidth={1.5} />
+          <span>Report Issue</span>
         </Link>
       </div>
 
+      {/* Standardized Stat Cards Grid */}
+      <StatsGrid>
+        <StatCard
+          label="TOTAL DEFECTS"
+          value={totalCount}
+          delta="Reported across section"
+          isLoading={loading}
+        />
+        <StatCard
+          label="ACTIVE DEFECTS"
+          value={activeCount}
+          delta={activeCount > 0 ? `${activeCount} pending resolution` : 'All defects cleared'}
+          urgency={activeCount > 0 ? 'urgent' : 'normal'}
+          isLoading={loading}
+        />
+        <StatCard
+          label="UNDER REVIEW"
+          value={underReviewCount}
+          delta="Awaiting manager validation"
+          isLoading={loading}
+        />
+        <StatCard
+          label="APPROVED FOR BLOCK"
+          value={approvedCount}
+          delta="Scheduled for possession"
+          isLoading={loading}
+        />
+      </StatsGrid>
+
       {/* Filter and Search Bar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-        <div className="relative flex-1">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-zinc-900 border border-zinc-800 rounded-lg p-3">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" strokeWidth={1.5} />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by ID, defect, location..."
-            className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+            placeholder="Search defect ID, description, location..."
+            className="w-full bg-zinc-950 border border-zinc-800 rounded-md pl-9 pr-3 py-1.5 text-xs text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:border-zinc-700"
           />
         </div>
 
-        <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 sm:pb-0">
+        {/* Status Filter Tabs */}
+        <div className="flex items-center space-x-1.5 overflow-x-auto bg-zinc-950 border border-zinc-800 rounded-md p-1 text-[11px]">
           {[
-            { id: 'ALL', label: 'All' },
-            { id: 'UNDER_REVIEW', label: 'Under Review' },
-            { id: 'APPROVED', label: 'Approved' },
-            { id: 'IN_PROGRESS', label: 'In Progress' },
-            { id: 'RESOLVED', label: 'Resolved' }
-          ].map(f => (
+            { key: 'ALL', label: 'All' },
+            { key: 'UNDER_REVIEW', label: 'Under Review' },
+            { key: 'APPROVED', label: 'Approved' },
+            { key: 'IN_PROGRESS', label: 'In Progress' },
+            { key: 'RESOLVED', label: 'Resolved' }
+          ].map((tab) => (
             <button
-              key={f.id}
-              onClick={() => setStatusFilter(f.id)}
-              className={`px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-colors min-h-[40px] ${
-                statusFilter === f.id
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'
+              key={tab.key}
+              onClick={() => setStatusFilter(tab.key)}
+              className={`px-2.5 py-1 rounded font-medium transition-colors whitespace-nowrap ${
+                statusFilter === tab.key
+                  ? 'bg-blue-600 text-white'
+                  : 'text-zinc-400 hover:text-zinc-200'
               }`}
             >
-              {f.label}
+              {tab.label}
             </button>
           ))}
         </div>
@@ -243,9 +258,9 @@ export const InspectorIssuesList: React.FC = () => {
         keyExtractor={(t) => t.task_id}
         renderMobileCard={renderMobileCard}
         isLoading={loading}
-        emptyTitle="No reported issues found"
-        emptyDescription="No issues match your active search or status filter."
-        emptyActionText="+ Report Issue"
+        emptyTitle="No issues matching criteria"
+        emptyDescription="There are no reported issues matching your current search or filter selection."
+        emptyActionText="Report New Issue"
         onEmptyAction={() => navigate('/inspector/report-issue')}
       />
     </div>

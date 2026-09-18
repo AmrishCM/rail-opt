@@ -186,13 +186,13 @@ export const EngineerReportIssue: React.FC = () => {
           {photoEvidence && <span className="text-emerald-400 text-xs font-bold ml-2">Photo attached</span>}
         </div>
 
-        <div className="pt-2 border-t border-slate-800">
+        <div className="pt-2 border-t border-zinc-800">
           <button
             type="submit"
             disabled={submitting}
-            className="w-full py-3.5 px-6 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-sm transition-all shadow-lg shadow-amber-500/20 active:scale-98 min-h-[48px]"
+            className="w-full py-3 px-6 rounded-md bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-medium text-sm transition-colors shadow-sm min-h-[44px]"
           >
-            {submitting ? 'Submitting...' : 'SUBMIT ISSUE REPORT'}
+            {submitting ? 'Submitting...' : 'Submit Issue Report'}
           </button>
         </div>
       </form>
@@ -201,3 +201,4 @@ export const EngineerReportIssue: React.FC = () => {
 }
 
 export default EngineerReportIssue
+

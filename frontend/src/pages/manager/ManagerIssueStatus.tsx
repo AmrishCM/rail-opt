@@ -65,22 +65,23 @@ export const ManagerIssueStatus: React.FC = () => {
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
       {/* Header */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center space-x-2 text-blue-400 font-bold text-xs uppercase tracking-wider mb-1">
-            <Workflow className="w-4 h-4" />
+          <div className="flex items-center space-x-2 text-blue-400 font-mono text-[11px] uppercase tracking-wider mb-1">
+            <Workflow className="w-3.5 h-3.5" strokeWidth={1.5} />
             <span>End-to-End Operational Lifecycle</span>
           </div>
-          <h1 className="text-xl sm:text-2xl font-black text-white">Issue Workflow Status</h1>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <h1 className="text-xl sm:text-2xl font-semibold text-zinc-100">Issue Workflow Status</h1>
+          <p className="text-xs text-zinc-400 mt-1">
             Monitor state progression from field report through manager review, engineer execution, and final possession clearance
           </p>
         </div>
 
-        <div className="text-xs font-mono text-slate-400 bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-700">
-          Total Track Issues: <strong className="text-white font-bold">{tasks.length}</strong>
+        <div className="text-xs font-mono text-zinc-400 bg-zinc-800/80 px-3 py-1.5 rounded-md border border-zinc-700/80">
+          Total Track Issues: <strong className="text-zinc-100 font-semibold">{tasks.length}</strong>
         </div>
       </div>
+
 
       {/* Canonical Workflow Visual Stepper (Section 9) */}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 overflow-x-auto">

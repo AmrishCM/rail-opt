@@ -63,28 +63,29 @@ export const EngineerDashboard: React.FC = () => {
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-zinc-900 border border-zinc-800 rounded-lg p-5">
         <div>
           <div className="flex items-center space-x-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse" />
-            <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">Maintenance Execution Active</span>
+            <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+            <span className="text-[11px] font-mono text-blue-400 uppercase tracking-wider">Maintenance Execution Active</span>
           </div>
-          <h1 className="text-xl sm:text-2xl font-black text-white mt-1">Engineer Work Station</h1>
-          <p className="text-xs text-slate-400 mt-0.5">
-            Operational queue for <span className="text-white font-semibold">{user?.full_name || 'Maintenance Engineer'}</span> • Department: <span className="text-amber-400 font-bold">{user?.department || 'Civil Track'}</span>
+          <h1 className="text-xl sm:text-2xl font-semibold text-zinc-100 mt-1">Engineer Work Station</h1>
+          <p className="text-xs text-zinc-400 mt-0.5">
+            Operational queue for <span className="text-zinc-200 font-medium">{user?.full_name || 'Maintenance Engineer'}</span> &bull; Department: <span className="text-zinc-200 font-medium">{user?.department || 'Civil Track'}</span>
           </p>
         </div>
 
         <div className="flex items-center space-x-3">
           <Link
             to="/engineer/report-issue"
-            className="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs transition-all shadow-md shadow-amber-500/20 shrink-0 min-h-[44px]"
+            className="inline-flex items-center space-x-2 px-3.5 py-2 rounded-md bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs transition-colors shrink-0 shadow-sm"
           >
-            <PlusCircle className="w-4 h-4 text-slate-950" />
+            <PlusCircle className="w-4 h-4" strokeWidth={1.5} />
             <span>+ Report Issue</span>
           </Link>
         </div>
       </div>
+
 
       {/* Primary Hero Section: "What work do I need to complete?" (Section 13) */}
       <div className="bg-gradient-to-r from-amber-950/40 via-slate-900 to-slate-900 border-2 border-amber-500/30 rounded-3xl p-6 sm:p-8 shadow-xl">
