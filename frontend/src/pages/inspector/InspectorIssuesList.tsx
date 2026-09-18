@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { fetchTasks } from '../../services/api'
-import { OperationalTable, Column } from '../../components/common/OperationalTable'
+import { DataTable, ColumnDef } from '../../components/common/DataTable'
 import {
   PlusCircle,
   Filter,
@@ -58,7 +58,7 @@ export const InspectorIssuesList: React.FC = () => {
     return true
   })
 
-  const columns: Column<any>[] = [
+  const columns: ColumnDef<any>[] = [
     {
       key: 'reference_no',
       header: 'Issue ID',
@@ -237,7 +237,7 @@ export const InspectorIssuesList: React.FC = () => {
       </div>
 
       {/* Operational Table */}
-      <OperationalTable
+      <DataTable
         data={filteredTasks}
         columns={columns}
         keyExtractor={(t) => t.task_id}

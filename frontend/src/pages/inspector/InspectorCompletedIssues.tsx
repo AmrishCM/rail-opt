@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { fetchTasks } from '../../services/api'
-import { OperationalTable, Column } from '../../components/common/OperationalTable'
+import { DataTable, ColumnDef } from '../../components/common/DataTable'
 import {
   CheckCircle2,
   Lock,
@@ -39,7 +39,7 @@ export const InspectorCompletedIssues: React.FC = () => {
     loadCompletedTasks()
   }, [user])
 
-  const columns: Column<any>[] = [
+  const columns: ColumnDef<any>[] = [
     {
       key: 'reference_no',
       header: 'Issue ID',
@@ -164,7 +164,7 @@ export const InspectorCompletedIssues: React.FC = () => {
       </div>
 
       {/* Operational Table */}
-      <OperationalTable
+      <DataTable
         data={tasks}
         columns={columns}
         keyExtractor={(t) => t.task_id}

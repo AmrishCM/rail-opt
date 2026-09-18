@@ -6,7 +6,7 @@ import {
   startTaskWork,
   resolveTaskWork
 } from '../../services/api'
-import { OperationalTable, Column } from '../../components/common/OperationalTable'
+import { DataTable, ColumnDef } from '../../components/common/DataTable'
 import {
   Wrench,
   Clock,
@@ -151,11 +151,12 @@ export const EngineerWorkQueue: React.FC<EngineerWorkQueueProps> = ({ initialFil
     return true
   })
 
-  const columns: Column<any>[] = [
+  const columns: ColumnDef<any>[] = [
     {
       key: 'reference_no',
       header: 'Issue ID',
       priority: 'essential',
+      className: 'font-mono',
       render: (t) => (
         <span className="font-mono font-black text-amber-400">
           {t.reference_no || `TASK-${t.task_id}`}
@@ -398,7 +399,7 @@ export const EngineerWorkQueue: React.FC<EngineerWorkQueueProps> = ({ initialFil
       )}
 
       {/* Operational Table */}
-      <OperationalTable
+      <DataTable
         data={filteredTasks}
         columns={columns}
         keyExtractor={(t) => t.task_id}

@@ -1,45 +1,76 @@
+@import "@fontsource/geist/index.css";
+@import "@fontsource/geist-mono/index.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
+  /* Design System Variables */
+  --bg-base: #f8fafc; /* slate-50 */
+  --text-base: #172027; /* slate-900 */
+  --border-base: #e2e8f0; /* slate-200 */
+  
+  /* SINGLE ACCENT COLOR - Emerald (<80% saturation) */
+  --accent-primary: #059669; /* emerald-600 */
+  --accent-primary-hover: #047857; /* emerald-700 */
+  --bg-accent: #f0fdf4; /* emerald-50 */
+  --border-accent: #dcfce7; /* emerald-200 */
+  
+  /* Status Colors (semantic) */
+  --status-critical: #dc2626; /* red-600 */
+  --status-warning: #d97706; /* amber-600 */
+  --status-success: #059669; /* emerald-600 (same as primary) */
+  --status-info: #2563eb; /* blue-600 */
+  
+  /* Legacy variables (kept for compatibility) */
   --bg-primary: #f5f6f7;
   --surface: #ffffff;
   --surface-secondary: #eef1f3;
-
   --text-primary: #172027;
   --text-secondary: #59636b;
   --text-muted: #737d84;
-
   --border: #d7dde1;
-
   --primary: #8f1d2c;
   --primary-dark: #711522;
-
   --success: #26734d;
   --warning: #a66a00;
   --danger: #b42318;
   --info: #315f86;
-
   --background: #f5f6f7;
   --foreground: #172027;
 }
 
 body {
-  color: var(--text-primary);
-  background-color: var(--bg-primary);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  color: var(--text-base);
+  background-color: var(--bg-base);
+  font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Accessible focus outline */
+/* Accessible focus outline - using accent color */
 *:focus-visible {
-  outline: 2px solid var(--primary);
-  outline-offset: 1px;
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
 }
 
 /* Smooth scrolling */
 html {
   scroll-behavior: smooth;
-  background-color: var(--bg-primary);
+  background-color: var(--bg-base);
 }
+
+/* Utility classes for design system */
+.bg-base { background-color: var(--bg-base); }
+.text-base { color: var(--text-base); }
+.border-base { border-color: var(--border-base); }
+
+.accent-primary { color: var(--accent-primary); }
+.accent-primary:hover { color: var(--accent-primary-hover); }
+.bg-accent { background-color: var(--bg-accent); }
+.border-accent { border-color: var(--border-accent); }
+
+.status-critical { color: var(--status-critical); }
+.status-warning { color: var(--status-warning); }
+.status-success { color: var(--status-success); }
+.status-info { color: var(--status-info); }
