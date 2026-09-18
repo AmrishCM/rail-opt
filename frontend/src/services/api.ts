@@ -1,6 +1,7 @@
 import { apiClient as api, API_BASE } from '../lib/apiClient'
 
 export { api, api as apiClient, API_BASE }
+export default api
 
 // Authentication & Users
 export async function loginUser(credentials: { username: string; password: string }) {

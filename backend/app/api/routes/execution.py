@@ -397,13 +397,22 @@ def report_problem(
 
     # Update assignment and task status
     pa.status = "DELAY_REQUESTED"
+    replan_ref = f"RPL-{pa.task_id}-{exec_issue.issue_id:03d}"
     if task:
-        task.status = TaskStatus.BLOCKED
+        task.status = TaskStatus.REPLAN_REQUESTED
 
     if er:
         er.status = ExecutionStatus.BLOCKED
         er.issue_encountered = f"{request.issue_category}: {request.description} (+{exec_issue.additional_duration_minutes} min requested)"
 
+    audit = AuditLog(
+        action="REPLAN_REQUESTED",
+        entity_type="ISSUE",
+        entity_id=task.reference_no if task else str(pa.task_id),
+        user_id=user.employee_id if user else "EMP-ENG-001",
+        details=f"Field engineer {user_name} requested replan ({replan_ref}): {request.description} (+{exec_issue.additional_duration_minutes}m)"
+    )
+    db.add(audit)
     db.commit()
 
     # Broadcast to Operations Manager

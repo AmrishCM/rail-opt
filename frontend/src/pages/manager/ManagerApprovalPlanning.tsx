@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import {
+import api, {
   fetchTasks,
   fetchIssueAiPlan,
   approveIssuePlan,
   rejectTask,
   fetchUsers
 } from '../../services/api'
+import IssueStatusWorkflow from '../../components/workflow/IssueStatusWorkflow'
 import { PriorityBadge, StatusBadge } from '../../components/common/RailwayBadges'
 import {
   ShieldAlert,
@@ -34,6 +35,7 @@ export const ManagerApprovalPlanning: React.FC = () => {
   const [tasks, setTasks] = useState<any[]>([])
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null)
   const [planData, setPlanData] = useState<any | null>(null)
+  const [versions, setVersions] = useState<any[]>([])
   const [engineers, setEngineers] = useState<any[]>([])
   const [loadingTasks, setLoadingTasks] = useState(true)
   const [loadingPlan, setLoadingPlan] = useState(false)
@@ -58,10 +60,24 @@ export const ManagerApprovalPlanning: React.FC = () => {
         fetchTasks({ scope: 'approvals', page_size: 100 }),
         fetchUsers({ role: 'MAINTENANCE_ENGINEER' }).catch(() => ({ items: [] }))
       ])
-      const pending = (tasksRes?.items || []).filter((t: any) =>
-        ['NEW', 'SUBMITTED', 'UNDER_REVIEW', 'PRIORITIZED'].includes(t.status)
+      const allItems = tasksRes?.items || []
+      const pending = allItems.filter((t: any) =>
+        [
+          'REPORTED',
+          'AI_PLANNING',
+          'PLAN_READY',
+          'MANAGER_REVIEW',
+          'REPLAN_REQUESTED',
+          'AI_REPLANNING',
+          'NEW',
+          'SUBMITTED',
+          'UNDER_REVIEW',
+          'PRIORITIZED',
+          'APPROVED',
+          'ASSIGNED'
+        ].includes(t.status)
       )
-      setTasks(pending)
+      setTasks(pending.length > 0 ? pending : allItems)
       setEngineers(usersRes?.items || [])
       if (pending.length > 0 && !selectedTaskId) {
         setSelectedTaskId(pending[0].task_id)
@@ -81,14 +97,19 @@ export const ManagerApprovalPlanning: React.FC = () => {
   useEffect(() => {
     if (!selectedTaskId) {
       setPlanData(null)
+      setVersions([])
       return
     }
     const loadAiPlan = async () => {
       setLoadingPlan(true)
       setActionError(null)
       try {
-        const res = await fetchIssueAiPlan(selectedTaskId)
+        const [res, versRes] = await Promise.all([
+          fetchIssueAiPlan(selectedTaskId),
+          api.get(`/planning/issue/${selectedTaskId}/versions`).catch(() => ({ data: { versions: [] } }))
+        ])
         setPlanData(res)
+        setVersions(versRes?.data?.versions || [])
         if (res.recommended_plan?.engineer_id) {
           setSelectedEngineerId(res.recommended_plan.engineer_id)
         }
@@ -331,6 +352,62 @@ export const ManagerApprovalPlanning: React.FC = () => {
                   <strong className="text-[#59636b]">Defect Details:</strong> {planData.description}
                 </div>
               </div>
+
+              {/* Real Operational Lifecycle Map */}
+              <IssueStatusWorkflow
+                taskId={selectedTaskId}
+                currentStatus={planData.status}
+                referenceNo={planData.issue_id}
+                compact={true}
+              />
+
+              {/* Version History Comparison (if multiple versions exist) */}
+              {versions && versions.length > 1 && (
+                <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <div className="flex items-center space-x-2 text-xs font-bold text-amber-400">
+                      <RotateCcw className="w-4 h-4" />
+                      <span>Plan Evolution & Replan History ({versions.length} versions)</span>
+                    </div>
+                    <span className="text-[10px] px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold">
+                      Superseded Baseline
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    {versions.map((v: any) => (
+                      <div
+                        key={v.plan_id}
+                        className={`p-3 rounded-lg border text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${
+                          v.is_active
+                            ? 'bg-blue-900/20 border-blue-500/50 text-blue-200'
+                            : 'bg-slate-950/60 border-slate-800/80 text-slate-400'
+                        }`}
+                      >
+                        <div className="space-y-0.5">
+                          <div className="flex items-center space-x-2">
+                            <span className="font-bold text-white">Version {v.version}</span>
+                            <span className="font-mono text-[10px] text-blue-400">({v.plan_number})</span>
+                            <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-300 uppercase">
+                              {v.status}
+                            </span>
+                          </div>
+                          <p className="text-slate-300 text-xs">
+                            Possession Window: <strong className="font-mono text-amber-300">{v.window}</strong> • Assigned: {v.engineer}
+                          </p>
+                          {v.changes && (
+                            <p className="text-[11px] text-slate-400 italic mt-0.5">
+                              {v.changes.join(' • ')}
+                            </p>
+                          )}
+                        </div>
+                        <span className="text-[10px] text-slate-500 font-mono">
+                          {v.approved_at ? new Date(v.approved_at).toLocaleTimeString() : 'Draft'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* 2. AI RECOMMENDED PLAN + OPERATIONAL CONFLICTS (2-COLUMNS) */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">

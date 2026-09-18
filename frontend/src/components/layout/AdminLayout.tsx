@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   Users,
   Shield,
+  ShieldCheck,
   Calendar,
   AlertTriangle,
   ClipboardCheck,
@@ -17,7 +18,10 @@ import {
   BarChart3,
   FileText,
   Activity,
-  User
+  User,
+  Train,
+  Wrench,
+  Bell
 } from 'lucide-react'
 
 export const AdminLayout: React.FC = () => {
@@ -29,13 +33,14 @@ export const AdminLayout: React.FC = () => {
     { to: '/admin/issues', label: 'Issues', icon: AlertTriangle },
     { to: '/admin/approval-planning', label: 'Approval & Planning', icon: ShieldCheck, highlight: true },
     { to: '/admin/timetable', label: 'Timetable', icon: Calendar },
+    { to: '/admin/track-view', label: 'Track View', icon: Train },
     { to: '/admin/work-orders', label: 'Work Orders', icon: ClipboardCheck },
-    { to: '/admin/users', label: 'Users', icon: Users },
-    { to: '/admin/settings', label: 'Railway Configuration', icon: Sliders },
+    { to: '/admin/resources', label: 'Assets & Fleet', icon: Wrench },
+    { to: '/admin/users', label: 'Users & Roles', icon: Users },
     { to: '/admin/authorities', label: 'Authorities', icon: PhoneCall },
-    { to: '/admin/reports', label: 'Reports', icon: BarChart3 },
     { to: '/admin/audit', label: 'Audit Trail', icon: FileText },
-    { to: '/admin/diagnostics', label: 'System Telemetry', icon: Activity },
+    { to: '/admin/notifications', label: 'Notifications', icon: Bell },
+    { to: '/admin/diagnostics', label: 'System Diagnostics', icon: Activity },
     { to: '/profile', label: 'Profile', icon: User },
   ]
 

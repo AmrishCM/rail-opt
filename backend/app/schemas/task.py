@@ -34,7 +34,9 @@ class MaintenanceTaskBase(BaseModel):
     dependencies: Optional[str] = None
 
 class MaintenanceTaskCreate(MaintenanceTaskBase):
-    pass
+    issue: Optional[str] = None
+    location: Optional[str] = None
+    photo: Optional[str] = None
 
 class MaintenanceTaskResponse(MaintenanceTaskBase):
     task_id: int

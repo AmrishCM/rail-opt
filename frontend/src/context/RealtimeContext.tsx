@@ -42,7 +42,8 @@ export const RealtimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'connecting' | 'disconnected' | 'reconnecting'>('disconnected')
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([])
   const [lastEvent, setLastEvent] = useState<DomainEventPacket | null>(null)
-  const [toast, setToast] = useState<{ title: string; message: string; type?: string } | null>(null)
+  const [toasts, setToasts] = useState<{ id: string; title: string; message: string; type?: string; link?: string }[]>([])
+  const toast = toasts[0] || null
 
   const wsRef = useRef<WebSocket | null>(null)
   const pingTimerRef = useRef<any>(null)
@@ -51,7 +52,11 @@ export const RealtimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const backoffRef = useRef<number>(1000)
 
   const clearToast = useCallback(() => {
-    setToast(null)
+    setToasts((prev) => prev.slice(1))
+  }, [])
+
+  const removeToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id))
   }, [])
 
   // Invalidate queries across the application when operational domain events occur
@@ -62,11 +67,21 @@ export const RealtimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     // Show toast for actionable updates
     if (event.title || event.message) {
-      setToast({
+      const newId = `${Date.now()}-${Math.random().toString(36).substr(2, 4)}`
+      const isCrit = eventType.includes('CRITICAL') || eventType.includes('REPLAN')
+      const newToast = {
+        id: newId,
         title: event.title || `Live Update: ${eventType}`,
         message: event.message || 'System operational state changed.',
-        type: eventType.includes('CRITICAL') ? 'critical' : 'info'
-      })
+        type: isCrit ? 'critical' : 'info',
+        link: event.payload?.work_order_id ? '/engineer/pending-work' : (event.payload?.task_id ? '/manager/approval-planning' : undefined)
+      }
+      setToasts((prev) => [newToast, ...prev].slice(0, 4))
+
+      // Auto dismiss after 8 seconds
+      setTimeout(() => {
+        setToasts((prev) => prev.filter((t) => t.id !== newId))
+      }, 8000)
     }
 
     // Invalidate relevant query caches
@@ -290,22 +305,46 @@ export const RealtimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }}
     >
       {children}
-      {/* Toast popup for live domain events */}
-      {toast && (
-        <div className="fixed bottom-4 right-4 z-50 max-w-md bg-slate-900 text-white rounded-lg shadow-2xl p-4 border border-slate-700 animate-slide-up flex items-start space-x-3">
-          <div className="flex-1">
-            <div className="flex items-center space-x-2">
-              <span className={`w-2.5 h-2.5 rounded-full ${toast.type === 'critical' ? 'bg-red-500 animate-pulse' : 'bg-emerald-400'}`}></span>
-              <h4 className="text-sm font-semibold tracking-wide text-white">{toast.title}</h4>
+      {/* Toast popup stack for live domain events */}
+      {toasts.length > 0 && (
+        <div className="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 max-w-sm w-full pointer-events-none">
+          {toasts.map((t) => (
+            <div
+              key={t.id}
+              className={`pointer-events-auto p-3.5 rounded-xl border shadow-2xl backdrop-blur-md flex items-start space-x-3 transition-all animate-slide-up ${
+                t.type === 'critical'
+                  ? 'bg-rose-950/95 border-rose-600/80 text-rose-100 shadow-rose-900/20'
+                  : 'bg-slate-900/95 border-blue-500/60 text-white shadow-blue-900/20'
+              }`}
+            >
+              <div className="flex-1 space-y-1">
+                <div className="flex items-center space-x-2">
+                  <span
+                    className={`w-2 h-2 rounded-full ${
+                      t.type === 'critical' ? 'bg-rose-400 animate-pulse' : 'bg-blue-400'
+                    }`}
+                  />
+                  <h4 className="text-xs font-bold tracking-wide">{t.title}</h4>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-snug">{t.message}</p>
+                {t.link && (
+                  <a
+                    href={t.link}
+                    className="inline-block text-[10px] font-bold text-blue-400 hover:text-blue-300 underline pt-0.5"
+                  >
+                    View Details →
+                  </a>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => removeToast(t.id)}
+                className="text-slate-400 hover:text-white text-xs px-1.5 py-0.5 rounded bg-slate-800/80 hover:bg-slate-800 transition shrink-0"
+              >
+                ✕
+              </button>
             </div>
-            <p className="text-xs text-slate-300 mt-1 leading-relaxed">{toast.message}</p>
-          </div>
-          <button
-            onClick={clearToast}
-            className="text-slate-400 hover:text-white text-xs px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 transition"
-          >
-            ✕
-          </button>
+          ))}
         </div>
       )}
     </RealtimeContext.Provider>

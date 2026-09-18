@@ -17,24 +17,26 @@ import {
   Bell,
   User,
   ShieldAlert,
-  Sliders
+  Sliders,
+  Train,
+  FileText
 } from 'lucide-react'
 
 export const ManagerLayout: React.FC = () => {
   const { user } = useAuth()
   const [emergencyModalOpen, setEmergencyModalOpen] = useState(false)
 
-  // Part 7 & Master Redesign: Manager Primary Navigation
+  // Manager Primary Navigation
   const navItems = [
     { to: '/manager/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { to: '/manager/status', label: 'Issues', icon: AlertTriangle },
+    { to: '/manager/status', label: 'Issue Statuses', icon: AlertTriangle },
     { to: '/manager/approval-planning', label: 'Approval & Planning', icon: ShieldAlert, highlight: true },
     { to: '/manager/timetable', label: 'Timetable', icon: Calendar },
     { to: '/manager/replan', label: 'Replanning', icon: RotateCcw },
-    { to: '/manager/status', label: 'Work Orders', icon: Wrench },
-    { to: '/manager/engineers', label: 'Engineers', icon: Users },
+    { to: '/manager/track-view', label: 'Track View', icon: Train },
+    { to: '/manager/resources', label: 'Assets & Machinery', icon: Wrench },
     { to: '/manager/authorities', label: 'Authority Coordination', icon: PhoneCall },
-    { to: '/manager/reports', label: 'Reports', icon: BarChart3 },
+    { to: '/manager/audit', label: 'Audit Trail', icon: FileText },
     { to: '/manager/notifications', label: 'Notifications', icon: Bell },
   ]
 

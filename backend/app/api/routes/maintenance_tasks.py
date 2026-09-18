@@ -1,4 +1,3 @@
-import random
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
@@ -313,17 +312,21 @@ def create_task(
 
     # Database transaction
     try:
+        desc = payload.description or payload.issue or "Maintenance defect reported"
+        loc = payload.location_name or payload.location or (ast.location if ast else f"Section C2-0{section_id}")
+        photo = payload.photo_evidence or payload.photo
+
         new_task = MaintenanceTask(
             asset_id=target_asset_id,
             corridor_id=corridor_id,
             section_id=section_id,
-            location_name=payload.location_name or (ast.location if ast else f"Section C2-0{section_id}"),
+            location_name=loc,
             department=payload.department,
             task_type=payload.task_type,
-            defect_type=payload.defect_type or "Maintenance defect",
-            description=payload.description,
+            defect_type=payload.defect_type or (payload.issue[:40] if payload.issue else "Maintenance defect"),
+            description=desc,
             severity=payload.severity,
-            photo_evidence=payload.photo_evidence,
+            photo_evidence=photo,
             additional_notes=payload.additional_notes,
             idempotency_key=payload.idempotency_key,
             estimated_duration=payload.estimated_duration,
@@ -333,21 +336,21 @@ def create_task(
             overdue_days=payload.overdue_days,
             priority_score=score,
             priority_level=level,
-            status=TaskStatus.NEW,
+            status=TaskStatus.REPORTED,
             created_by_user_id=user.user_id if user else None
         )
         db.add(new_task)
         db.flush()
 
-        ref_no = f"IR-2026-{new_task.task_id:04d}"
+        ref_no = f"RO-2026-{new_task.task_id:05d}"
         new_task.reference_no = ref_no
 
         audit = AuditLog(
-            action="MAINTENANCE_REPORTED",
-            entity_type="TASK",
+            action="ISSUE_REPORTED",
+            entity_type="ISSUE",
             entity_id=ref_no,
             user_id=user.employee_id if user else "EMP-INS-001",
-            details=f"Issue {ref_no} reported: {payload.description} (Priority: {score}/100 - {level})"
+            details=f"Issue {ref_no} reported: {desc} (Priority: {score}/100 - {level})"
         )
         db.add(audit)
         db.commit()
@@ -373,7 +376,7 @@ def create_task(
                 "priority_level": level,
                 "department": new_task.department,
                 "location": new_task.location_name or (ast.location if ast else "Section C2-02"),
-                "status": "NEW"
+                "status": "REPORTED"
             },
             user_id=user.user_id if user else None,
             target_role="OPERATIONS_MANAGER",
@@ -385,11 +388,40 @@ def create_task(
     except Exception as bus_err:
         print(f"[EVENT_BUS] Broadcast error: {bus_err}")
 
+    # Auto-trigger AI Planning transition and ready for Manager Review
+    try:
+        new_task.status = TaskStatus.MANAGER_REVIEW
+        audit_plan = AuditLog(
+            action="AI_PLANNING_COMPLETED",
+            entity_type="ISSUE",
+            entity_id=ref_no,
+            user_id="SYSTEM",
+            details=f"AI Planning Engine generated maintenance schedule for {ref_no}. Ready for Operations Manager review."
+        )
+        db.add(audit_plan)
+        db.commit()
+        db.refresh(new_task)
+
+        DomainEventBus.publish(
+            db=db,
+            event_type="PLAN_READY",
+            aggregate_type="ISSUE",
+            aggregate_id=ref_no,
+            payload={"task_id": new_task.task_id, "reference_no": ref_no, "status": "MANAGER_REVIEW"},
+            title=f"AI Plan Ready: {ref_no}",
+            message=f"Optimized schedule for {ref_no} is ready for Manager approval.",
+            target_role="OPERATIONS_MANAGER",
+            reference_type="ISSUE",
+            reference_id=ref_no
+        )
+    except Exception as plan_err:
+        print(f"[AI_PLANNING] Auto-trigger error: {plan_err}")
+
     formatted = _format_task_dict(new_task)
     return {
         "success": True,
         "data": formatted,
-        "message": f"Maintenance issue {ref_no} submitted and prioritized ({score}/100 - {level}).",
+        "message": f"Issue {ref_no} reported successfully. AI Plan generated and ready for Manager review.",
         **formatted
     }
 
@@ -688,6 +720,43 @@ def resolve_task(
 def verify_task(
     task_id: int,
     payload: Optional[VerifyTaskRequest] = None,
+    user: User = Depends(require_role(["MANAGER", "ADMIN", "INSPECTOR"])),
+    db: Session = Depends(get_db)
+):
+    t = db.query(MaintenanceTask).filter(MaintenanceTask.task_id == task_id).first()
+    if not t:
+        raise HTTPException(status_code=404, detail="Maintenance issue not found")
+
+    t.status = TaskStatus.VERIFIED
+    audit = AuditLog(
+        action="ISSUE_VERIFIED",
+        entity_type="TASK",
+        entity_id=t.reference_no or str(t.task_id),
+        user_id=user.employee_id,
+        details=f"Work on {t.reference_no} verified by {user.full_name} ({user.role})"
+    )
+    db.add(audit)
+    db.commit()
+    db.refresh(t)
+
+    DomainEventBus.publish(
+        db=db,
+        event_type="ISSUE_VERIFIED",
+        aggregate_type="ISSUE",
+        aggregate_id=t.reference_no or str(t.task_id),
+        payload={"task_id": t.task_id, "status": "VERIFIED"},
+        user_id=user.user_id,
+        target_role="OPERATIONS_MANAGER",
+        title=f"Issue {t.reference_no} Verified",
+        message=f"Work on {t.reference_no} verified by {user.full_name}.",
+        reference_type="ISSUE",
+        reference_id=t.reference_no
+    )
+    return _format_task_dict(t)
+
+@router.post("/{task_id}/close")
+def close_task(
+    task_id: int,
     user: User = Depends(require_role(["MANAGER", "ADMIN"])),
     db: Session = Depends(get_db)
 ):
@@ -701,7 +770,7 @@ def verify_task(
         entity_type="TASK",
         entity_id=t.reference_no or str(t.task_id),
         user_id=user.employee_id,
-        details=f"Issue {t.reference_no} verified and closed by {user.full_name} ({user.role})"
+        details=f"Issue {t.reference_no} officially closed by {user.full_name} ({user.role})"
     )
     db.add(audit)
     db.commit()
@@ -715,9 +784,78 @@ def verify_task(
         payload={"task_id": t.task_id, "status": "CLOSED"},
         user_id=user.user_id,
         target_role="FIELD_INSPECTOR",
-        title=f"Issue {t.reference_no} Verified & Closed",
-        message=f"Issue {t.reference_no} has been verified and officially closed.",
+        title=f"Issue {t.reference_no} Closed",
+        message=f"Issue {t.reference_no} has been closed by {user.full_name}.",
         reference_type="ISSUE",
         reference_id=t.reference_no
     )
     return _format_task_dict(t)
+
+@router.get("/{task_id}/workflow")
+def get_task_workflow(task_id: int, db: Session = Depends(get_db)):
+    """Return full state machine workflow tracking for this issue."""
+    from ...services.state_machine import WORKFLOW_STAGES, REPLAN_STAGES, get_stage_status
+
+    t = db.query(MaintenanceTask).filter(MaintenanceTask.task_id == task_id).first()
+    if not t:
+        raise HTTPException(status_code=404, detail="Maintenance issue not found")
+
+    cur_status = t.status.value if hasattr(t.status, "value") else str(t.status)
+    ref_no = t.reference_no or f"RO-2026-{t.task_id:05d}"
+
+    # Get audits
+    audits = db.query(AuditLog).filter(
+        (AuditLog.entity_id == ref_no) | (AuditLog.entity_id == str(t.task_id))
+    ).order_by(AuditLog.timestamp.asc()).all()
+
+    audit_map = {}
+    for a in audits:
+        audit_map[a.action] = {
+            "timestamp": a.timestamp.isoformat() if a.timestamp else None,
+            "user_id": a.user_id,
+            "details": a.details
+        }
+
+    stages = []
+    for s in WORKFLOW_STAGES:
+        stage_state = get_stage_status(cur_status, s["key"])
+        stages.append({
+            "key": s["key"],
+            "label": s["label"],
+            "order": s["order"],
+            "state": stage_state,
+            "audit": audit_map.get(s["key"]) or audit_map.get(f"ISSUE_{s['key']}") or audit_map.get(f"PLAN_{s['key']}")
+        })
+
+    has_replan = cur_status in ("REPLAN_REQUESTED", "AI_REPLANNING", "REPLANNED") or any(
+        "REPLAN" in a.action for a in audits
+    )
+
+    replan_stages = []
+    if has_replan:
+        for rs in REPLAN_STAGES:
+            replan_stages.append({
+                "key": rs["key"],
+                "label": rs["label"],
+                "order": rs["order"],
+                "state": "completed" if cur_status in ("REPLANNED", "RESOLVED", "VERIFIED", "CLOSED") else ("current" if cur_status == rs["key"] else "future")
+            })
+
+    return {
+        "task_id": t.task_id,
+        "reference_no": ref_no,
+        "current_status": cur_status,
+        "stages": stages,
+        "has_replan": has_replan,
+        "replan_stages": replan_stages,
+        "audits": [
+            {
+                "log_id": a.log_id,
+                "action": a.action,
+                "user_id": a.user_id,
+                "details": a.details,
+                "timestamp": a.timestamp.isoformat() if a.timestamp else None
+            }
+            for a in audits
+        ]
+    }

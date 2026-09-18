@@ -81,7 +81,7 @@ def update_system_settings(
 @router.get("/audit")
 def get_audit_trail(
     limit: int = 100,
-    current_user: User = Depends(require_permission("system:audit")),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """

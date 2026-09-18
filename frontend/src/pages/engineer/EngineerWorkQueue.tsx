@@ -145,9 +145,9 @@ export const EngineerWorkQueue: React.FC<EngineerWorkQueueProps> = ({ initialFil
   }
 
   const filteredTasks = tasks.filter(t => {
-    if (filter === 'PENDING') return t.status === 'APPROVED' || t.status === 'SCHEDULED'
-    if (filter === 'IN_PROGRESS') return t.status === 'IN_PROGRESS'
-    if (filter === 'COMPLETED') return t.status === 'RESOLVED' || t.status === 'CLOSED'
+    if (filter === 'PENDING') return ['APPROVED', 'SCHEDULED', 'ASSIGNED', 'REPLANNED'].includes(t.status)
+    if (filter === 'IN_PROGRESS') return ['IN_PROGRESS', 'DELAY_REQUESTED', 'REPLAN_REQUESTED', 'AI_REPLANNING'].includes(t.status)
+    if (filter === 'COMPLETED') return ['RESOLVED', 'VERIFIED', 'CLOSED'].includes(t.status)
     return true
   })
 
@@ -217,7 +217,7 @@ export const EngineerWorkQueue: React.FC<EngineerWorkQueueProps> = ({ initialFil
       header: 'Field Action',
       priority: 'essential',
       render: (t) => {
-        if (t.status === 'APPROVED' || t.status === 'SCHEDULED') {
+        if (['APPROVED', 'SCHEDULED', 'ASSIGNED', 'REPLANNED'].includes(t.status)) {
           return (
             <button
               onClick={() => handleStartWork(t.task_id)}
@@ -256,7 +256,7 @@ export const EngineerWorkQueue: React.FC<EngineerWorkQueueProps> = ({ initialFil
             </div>
           )
         }
-        if (t.status === 'DELAY_REQUESTED') {
+        if (['DELAY_REQUESTED', 'REPLAN_REQUESTED', 'AI_REPLANNING'].includes(t.status)) {
           return (
             <span className="text-[11px] text-amber-400 font-bold flex items-center space-x-1 bg-amber-500/10 px-2 py-1 rounded border border-amber-500/30">
               <Clock className="w-3.5 h-3.5 animate-spin" />

@@ -1037,7 +1037,7 @@ def approve_delay_replan(
             pa.plan_id = active_plan.plan_id
 
     if task:
-        task.status = TaskStatus.SCHEDULED
+        task.status = TaskStatus.REPLANNED
         if active_plan:
             task.current_plan_id = active_plan.plan_id
 
@@ -1305,3 +1305,75 @@ def _format_plan_response(p: MaintenancePlan, bundled_blocks: list = None, defer
         "bundled_blocks": bundled_blocks or [],
         "deferred_tasks": deferred_tasks or []
     }
+
+
+@router.get("/issue/{task_id}/versions")
+def get_issue_plan_versions(task_id: int, db: Session = Depends(get_db)):
+    """Return all plan versions (v1, v2, etc.) for an issue with diff/audit context."""
+    task = db.query(MaintenanceTask).filter(MaintenanceTask.task_id == task_id).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Maintenance task not found")
+
+    # Find plans linked by maintenance_request_id or plan assignments
+    plans = db.query(MaintenancePlan).filter(
+        (MaintenancePlan.maintenance_request_id == task_id) |
+        (MaintenancePlan.plan_id.in_(
+            db.query(PlanAssignment.plan_id).filter(PlanAssignment.task_id == task_id)
+        ))
+    ).order_by(MaintenancePlan.version.asc()).all()
+
+    versions = []
+    prev_plan = None
+    for p in plans:
+        pa = db.query(PlanAssignment).filter(
+            PlanAssignment.plan_id == p.plan_id,
+            PlanAssignment.task_id == task_id
+        ).first()
+
+        start_str = p.horizon_start.strftime("%H:%M") if p.horizon_start else "14:30"
+        end_str = p.horizon_end.strftime("%H:%M") if p.horizon_end else "16:00"
+
+        eng_name = "Assigned Crew"
+        if pa and pa.resource_id:
+            eng_user = db.query(User).filter(User.user_id == pa.resource_id).first()
+            if eng_user:
+                eng_name = eng_user.full_name
+
+        version_data = {
+            "plan_id": p.plan_id,
+            "plan_number": p.plan_number or f"PLAN-2026-{p.plan_id:05d}",
+            "version": p.version or 1,
+            "status": p.status.value if hasattr(p.status, "value") else str(p.status),
+            "window": f"{start_str} – {end_str}",
+            "start_time": start_str,
+            "end_time": end_str,
+            "replan_reason": p.replan_reason or ("Initial AI Plan" if (p.version or 1) == 1 else "Operational extension"),
+            "approved_by": p.approved_by,
+            "approved_at": p.approved_at.isoformat() if p.approved_at else None,
+            "engineer": eng_name,
+            "total_score": p.total_score or 94.0,
+            "train_impact_minutes": p.train_impact_minutes or 0,
+            "is_active": (p.status == PlanStatus.APPROVED or p.status == PlanStatus.SCHEDULED) and (p.plan_id == task.current_plan_id or task.current_plan_id is None)
+        }
+
+        if prev_plan and (p.version or 1) > 1:
+            prev_start = prev_plan.horizon_start.strftime("%H:%M") if prev_plan.horizon_start else "14:30"
+            prev_end = prev_plan.horizon_end.strftime("%H:%M") if prev_plan.horizon_end else "15:15"
+            version_data["changes"] = [
+                f"Window shifted from {prev_start}–{prev_end} to {start_str}–{end_str}",
+                f"Reason: {p.replan_reason or 'Delay requested by field crew'}"
+            ]
+        else:
+            version_data["changes"] = ["Initial baseline plan approved"]
+
+        versions.append(version_data)
+        prev_plan = p
+
+    return {
+        "task_id": task.task_id,
+        "reference_no": task.reference_no or f"RO-2026-{task.task_id:05d}",
+        "current_plan_id": task.current_plan_id,
+        "total_versions": len(versions),
+        "versions": versions
+    }
+

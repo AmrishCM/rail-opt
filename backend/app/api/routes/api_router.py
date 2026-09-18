@@ -26,6 +26,7 @@ from . import (
     data,
     timeline,
     authorities,
+    mock_data,
 )
 
 # Create main API router
@@ -66,5 +67,6 @@ api_router.include_router(users.router, prefix="/users", tags=["users"])
 api_router.include_router(system.router, prefix="/system", tags=["system"])
 api_router.include_router(replan.router, prefix="/replan", tags=["replanning"])
 api_router.include_router(data.router, prefix="/data", tags=["data"])
+api_router.include_router(mock_data.router, prefix="/mock-data", tags=["mock_data"])
 
 __all__ = ["api_router"]

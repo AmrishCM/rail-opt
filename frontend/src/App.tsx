@@ -51,6 +51,12 @@ import AdminConsole from './pages/admin/AdminConsole'
 import WorkflowDiagnostics from './pages/admin/WorkflowDiagnostics'
 import Corridor2DView from './pages/corridors/Corridor2DView'
 
+// Shared Operational Pages & Components
+import NotificationsPage from './pages/shared/NotificationsPage'
+import AuditTrailPage from './pages/shared/AuditTrailPage'
+import ManagerAssetsResources from './pages/manager/ManagerAssetsResources'
+import TrackVisualization from './components/track/TrackVisualization'
+
 const queryClient = new QueryClient()
 
 const RoleDashboardRedirect: React.FC = () => {
@@ -122,7 +128,8 @@ function App() {
                 <Route path="report-issue" element={<InspectorReportIssue />} />
                 <Route path="issues" element={<InspectorIssuesList />} />
                 <Route path="completed" element={<InspectorCompletedIssues />} />
-                <Route path="notifications" element={<Analytics />} />
+                <Route path="track-view" element={<TrackVisualization />} />
+                <Route path="notifications" element={<NotificationsPage />} />
               </Route>
 
               {/* ============================================================== */}
@@ -146,10 +153,13 @@ function App() {
                 <Route path="status" element={<ManagerIssueStatus />} />
                 <Route path="replan" element={<ManagerReplanView />} />
                 <Route path="timetable" element={<ManagerTimetable />} />
-                <Route path="engineers" element={<Analytics />} />
+                <Route path="track-view" element={<TrackVisualization />} />
+                <Route path="resources" element={<ManagerAssetsResources />} />
+                <Route path="engineers" element={<ManagerAssetsResources />} />
                 <Route path="authorities" element={<ManagerAuthorityContact />} />
-                <Route path="reports" element={<Analytics />} />
-                <Route path="notifications" element={<Analytics />} />
+                <Route path="audit" element={<AuditTrailPage />} />
+                <Route path="reports" element={<AuditTrailPage />} />
+                <Route path="notifications" element={<NotificationsPage />} />
               </Route>
 
               {/* ============================================================== */}
@@ -172,7 +182,8 @@ function App() {
                 <Route path="completed-work" element={<EngineerWorkQueue initialFilter="COMPLETED" />} />
                 <Route path="report-issue" element={<EngineerReportIssue />} />
                 <Route path="timetable" element={<EngineerTimetable />} />
-                <Route path="notifications" element={<Analytics />} />
+                <Route path="track-view" element={<TrackVisualization />} />
+                <Route path="notifications" element={<NotificationsPage />} />
               </Route>
 
               {/* ============================================================== */}
@@ -199,9 +210,12 @@ function App() {
                 <Route path="work-orders" element={<EngineerWorkQueue initialFilter="ALL" />} />
                 <Route path="authorities" element={<ManagerAuthorityContact />} />
                 <Route path="sections" element={<Corridor2DView />} />
+                <Route path="track-view" element={<TrackVisualization />} />
+                <Route path="resources" element={<ManagerAssetsResources />} />
                 <Route path="settings" element={<AdminConsole />} />
-                <Route path="reports" element={<Analytics />} />
-                <Route path="audit" element={<AdminConsole />} />
+                <Route path="audit" element={<AuditTrailPage />} />
+                <Route path="reports" element={<AuditTrailPage />} />
+                <Route path="notifications" element={<NotificationsPage />} />
                 <Route path="diagnostics" element={<WorkflowDiagnostics />} />
               </Route>
 

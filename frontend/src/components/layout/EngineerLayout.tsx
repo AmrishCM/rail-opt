@@ -13,7 +13,8 @@ import {
   Bell,
   User,
   Wrench,
-  Hammer
+  Hammer,
+  Train
 } from 'lucide-react'
 
 export const EngineerLayout: React.FC = () => {
@@ -23,8 +24,9 @@ export const EngineerLayout: React.FC = () => {
     { to: '/engineer/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/engineer/pending-work', label: 'Pending Work', icon: Clock, highlight: true },
     { to: '/engineer/approved-work', label: 'Approved Work', icon: CheckCircle2 },
-    { to: '/engineer/report-issue', label: 'Report Issue', icon: PlusCircle },
     { to: '/engineer/timetable', label: 'Timetable', icon: Calendar },
+    { to: '/engineer/track-view', label: 'Track View', icon: Train },
+    { to: '/engineer/report-issue', label: 'Report Issue', icon: PlusCircle },
     { to: '/engineer/completed-work', label: 'Completed Work', icon: CheckSquare },
     { to: '/engineer/notifications', label: 'Notifications', icon: Bell },
     { to: '/profile', label: 'Profile', icon: User },

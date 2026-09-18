@@ -22,6 +22,7 @@ export const InspectorLayout: React.FC = () => {
   const navItems = [
     { to: '/inspector/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/inspector/timetable', label: 'Timetable', icon: Calendar },
+    { to: '/inspector/track-view', label: 'Track View', icon: Train },
     { to: '/inspector/report-issue', label: 'New Issue', icon: PlusCircle, highlight: true },
     { to: '/inspector/issues', label: 'My Issues', icon: ClipboardList },
     { to: '/inspector/completed', label: 'Completed Issues', icon: CheckCircle2 },
