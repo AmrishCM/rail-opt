@@ -6,16 +6,12 @@ import { MobileBottomNav } from './MobileBottomNav'
 import { EmergencyReplanModal } from '../../pages/emergency/EmergencyReplanModal'
 import {
   LayoutDashboard,
-  Brain,
   AlertTriangle,
   RotateCcw,
   Calendar,
   Wrench,
-  Users,
   PhoneCall,
-  BarChart3,
   Bell,
-  User,
   ShieldAlert,
   Sliders,
   Train,
@@ -26,11 +22,10 @@ export const ManagerLayout: React.FC = () => {
   const { user } = useAuth()
   const [emergencyModalOpen, setEmergencyModalOpen] = useState(false)
 
-  // Manager Primary Navigation
   const navItems = [
     { to: '/manager/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/manager/status', label: 'Issue Statuses', icon: AlertTriangle },
-    { to: '/manager/approval-planning', label: 'Approval & Planning', icon: ShieldAlert, highlight: true },
+    { to: '/manager/approval-planning', label: 'Approval & Planning', icon: ShieldAlert },
     { to: '/manager/timetable', label: 'Timetable', icon: Calendar },
     { to: '/manager/replan', label: 'Replanning', icon: RotateCcw },
     { to: '/manager/track-view', label: 'Track View', icon: Train },
@@ -41,32 +36,32 @@ export const ManagerLayout: React.FC = () => {
   ]
 
   return (
-    <div className="min-h-screen bg-[#f5f6f7] text-[#172027] flex flex-col font-sans antialiased">
-      {/* Top Header with Emergency Action for Manager */}
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col font-sans antialiased">
+      {/* Top Header */}
       <Header onOpenEmergencyModal={() => setEmergencyModalOpen(true)} />
 
       <div className="flex-1 flex w-full">
-        {/* Desktop / Tablet Sidebar (Hidden on Mobile < 768px) */}
-        <aside className="hidden md:flex flex-col justify-between w-56 lg:w-64 bg-[#0f172a] border-r border-slate-800 shrink-0 min-h-[calc(100vh-64px)] text-slate-100">
-          <div className="p-4 space-y-5">
+        {/* Desktop / Tablet Sidebar */}
+        <aside className="hidden md:flex flex-col justify-between w-60 bg-zinc-950 border-r border-zinc-800 shrink-0 min-h-[calc(100vh-56px)] text-zinc-300 select-none">
+          <div className="p-3 space-y-4">
             {/* Manager Identity Card */}
-            <div className="p-3 bg-slate-900 rounded-xl border border-rose-900/40">
-              <div className="flex items-center space-x-2 text-rose-400 font-extrabold text-xs">
-                <Sliders className="w-4 h-4 shrink-0" />
+            <div className="p-3 bg-zinc-900/60 rounded-md border border-zinc-800/80">
+              <div className="flex items-center space-x-2 text-zinc-200 font-medium text-xs">
+                <Sliders className="w-3.5 h-3.5 text-blue-400 shrink-0" strokeWidth={1.5} />
                 <span className="truncate">Operations Control Hub</span>
               </div>
-              <div className="text-[11px] text-slate-100 font-bold mt-1">
+              <div className="text-xs text-zinc-200 font-medium mt-1 truncate">
                 {user?.full_name || 'Operations Manager'}
               </div>
-              <div className="text-[10px] text-slate-400 font-mono mt-0.5">
-                Division: <span className="text-emerald-400 font-bold">{user?.division_name || 'Northern Zone'}</span>
+              <div className="text-[11px] text-zinc-400 font-mono mt-0.5">
+                Division: <span className="text-zinc-300 font-medium">{user?.division_name || 'Northern Zone'}</span>
               </div>
             </div>
 
             {/* Navigation Links */}
             <nav className="space-y-1">
-              <div className="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider px-3 mb-2">
-                Operations & Decision
+              <div className="text-[10px] font-semibold uppercase text-zinc-500 tracking-wider px-3 mb-1.5">
+                Operations & Planning
               </div>
               {navItems.map((item) => {
                 const Icon = item.icon
@@ -75,16 +70,14 @@ export const ManagerLayout: React.FC = () => {
                     key={item.to}
                     to={item.to}
                     className={({ isActive }) =>
-                      `flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                      `flex items-center space-x-2.5 px-3 py-2 rounded-md text-xs font-medium transition-colors ${
                         isActive
-                          ? 'bg-[#8f1d2c] text-white shadow-sm shadow-[#8f1d2c]/40'
-                          : item.highlight
-                          ? 'bg-rose-950/40 text-rose-200 hover:bg-rose-900/50 border border-rose-700/40'
-                          : 'text-slate-300 hover:text-white hover:bg-slate-800'
+                          ? 'bg-blue-500/10 text-blue-400 border-l-2 border-blue-500 rounded-l-none'
+                          : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/80'
                       }`
                     }
                   >
-                    <Icon className="w-4 h-4 shrink-0" />
+                    <Icon className="w-4 h-4 shrink-0" strokeWidth={1.5} />
                     <span className="truncate">{item.label}</span>
                   </NavLink>
                 )
@@ -93,14 +86,14 @@ export const ManagerLayout: React.FC = () => {
           </div>
 
           {/* Footer operational scope */}
-          <div className="p-4 border-t border-slate-800 text-[11px] text-slate-400">
-            <div className="font-bold text-slate-200">Decision & Authority Hub</div>
-            <div className="text-[10px] text-slate-400 mt-0.5">Role: Operations Manager</div>
+          <div className="p-3 border-t border-zinc-800 text-[11px] text-zinc-500">
+            <div className="font-medium text-zinc-400">RailOpt Control Operations</div>
+            <div className="text-[10px] text-zinc-600 mt-0.5">Authority: Operations Manager</div>
           </div>
         </aside>
 
         {/* Main Workspace */}
-        <main className="flex-1 overflow-x-hidden min-h-[calc(100vh-64px)] pb-20 md:pb-8 bg-[#f5f6f7]">
+        <main className="flex-1 overflow-x-auto min-h-[calc(100vh-56px)] pb-20 md:pb-8 bg-zinc-950">
           <Outlet />
         </main>
       </div>
@@ -110,11 +103,10 @@ export const ManagerLayout: React.FC = () => {
         <MobileBottomNav />
       </div>
 
-      {/* Emergency Replan Modal Accessible to Manager */}
-      <EmergencyReplanModal
-        isOpen={emergencyModalOpen}
-        onClose={() => setEmergencyModalOpen(false)}
-      />
+      {/* Emergency Replan Modal */}
+      {emergencyModalOpen && (
+        <EmergencyReplanModal onClose={() => setEmergencyModalOpen(false)} />
+      )}
     </div>
   )
 }

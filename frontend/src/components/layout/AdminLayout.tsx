@@ -13,9 +13,6 @@ import {
   AlertTriangle,
   ClipboardCheck,
   PhoneCall,
-  Map,
-  Sliders,
-  BarChart3,
   FileText,
   Activity,
   User,
@@ -31,7 +28,7 @@ export const AdminLayout: React.FC = () => {
   const navItems = [
     { to: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/admin/issues', label: 'Issues', icon: AlertTriangle },
-    { to: '/admin/approval-planning', label: 'Approval & Planning', icon: ShieldCheck, highlight: true },
+    { to: '/admin/approval-planning', label: 'Approval & Planning', icon: ShieldCheck },
     { to: '/admin/timetable', label: 'Timetable', icon: Calendar },
     { to: '/admin/track-view', label: 'Track View', icon: Train },
     { to: '/admin/work-orders', label: 'Work Orders', icon: ClipboardCheck },
@@ -45,32 +42,32 @@ export const AdminLayout: React.FC = () => {
   ]
 
   return (
-    <div className="min-h-screen bg-[#f5f6f7] text-[#172027] flex flex-col font-sans antialiased">
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col font-sans antialiased">
       {/* Top Header */}
       <Header onOpenEmergencyModal={() => setEmergencyModalOpen(true)} />
 
       <div className="flex-1 flex w-full">
-        {/* Desktop / Tablet Sidebar (Hidden on Mobile < 768px) */}
-        <aside className="hidden md:flex flex-col justify-between w-60 lg:w-64 bg-[#0f172a] border-r border-slate-800 shrink-0 min-h-[calc(100vh-64px)] text-slate-100">
-          <div className="p-4 space-y-4">
+        {/* Desktop / Tablet Sidebar */}
+        <aside className="hidden md:flex flex-col justify-between w-60 bg-zinc-950 border-r border-zinc-800 shrink-0 min-h-[calc(100vh-56px)] text-zinc-300 select-none">
+          <div className="p-3 space-y-4">
             {/* Admin Identity Card */}
-            <div className="p-3 bg-slate-900 rounded-xl border border-purple-900/40">
-              <div className="flex items-center space-x-2 text-purple-400 font-extrabold text-xs">
-                <Shield className="w-4 h-4 shrink-0" />
-                <span className="truncate">Administrative Control</span>
+            <div className="p-3 bg-zinc-900/60 rounded-md border border-zinc-800/80">
+              <div className="flex items-center space-x-2 text-zinc-200 font-medium text-xs">
+                <Shield className="w-3.5 h-3.5 text-blue-400 shrink-0" strokeWidth={1.5} />
+                <span className="truncate">System Administration</span>
               </div>
-              <div className="text-[11px] text-slate-100 font-bold mt-1">
-                {user?.full_name || 'System Administrator'}
+              <div className="text-xs text-zinc-200 font-medium mt-1 truncate">
+                {user?.full_name || 'Administrator'}
               </div>
-              <div className="text-[10px] text-slate-400 font-mono mt-0.5">
-                Privilege: <span className="text-purple-400 font-bold">Unrestricted / Audited</span>
+              <div className="text-[11px] text-zinc-400 font-mono mt-0.5">
+                Scope: <span className="text-zinc-300 font-medium">Enterprise Root</span>
               </div>
             </div>
 
-            {/* Navigation Links with Scrollbar */}
-            <nav className="space-y-1 max-h-[calc(100vh-220px)] overflow-y-auto pr-1">
-              <div className="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider px-3 mb-2">
-                Administration Shell
+            {/* Navigation Links */}
+            <nav className="space-y-1">
+              <div className="text-[10px] font-semibold uppercase text-zinc-500 tracking-wider px-3 mb-1.5">
+                System Controls
               </div>
               {navItems.map((item) => {
                 const Icon = item.icon
@@ -79,14 +76,14 @@ export const AdminLayout: React.FC = () => {
                     key={item.to}
                     to={item.to}
                     className={({ isActive }) =>
-                      `flex items-center space-x-3 px-3 py-2 rounded-xl text-xs font-bold transition-all ${
+                      `flex items-center space-x-2.5 px-3 py-2 rounded-md text-xs font-medium transition-colors ${
                         isActive
-                          ? 'bg-[#8f1d2c] text-white shadow-sm shadow-[#8f1d2c]/40'
-                          : 'text-slate-300 hover:text-white hover:bg-slate-800'
+                          ? 'bg-blue-500/10 text-blue-400 border-l-2 border-blue-500 rounded-l-none'
+                          : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/80'
                       }`
                     }
                   >
-                    <Icon className="w-4 h-4 shrink-0" />
+                    <Icon className="w-4 h-4 shrink-0" strokeWidth={1.5} />
                     <span className="truncate">{item.label}</span>
                   </NavLink>
                 )
@@ -95,14 +92,14 @@ export const AdminLayout: React.FC = () => {
           </div>
 
           {/* Footer operational scope */}
-          <div className="p-4 border-t border-slate-800 text-[11px] text-slate-400">
-            <div className="font-bold text-slate-200">Central Railway Admin</div>
-            <div className="text-[10px] text-slate-400 mt-0.5">All actions logged to audit trail</div>
+          <div className="p-3 border-t border-zinc-800 text-[11px] text-zinc-500">
+            <div className="font-medium text-zinc-400">RailOpt Admin Console</div>
+            <div className="text-[10px] text-zinc-600 mt-0.5">Role: System Administrator</div>
           </div>
         </aside>
 
         {/* Main Workspace */}
-        <main className="flex-1 overflow-x-hidden min-h-[calc(100vh-64px)] pb-20 md:pb-8 bg-[#f5f6f7]">
+        <main className="flex-1 overflow-x-auto min-h-[calc(100vh-56px)] pb-20 md:pb-8 bg-zinc-950">
           <Outlet />
         </main>
       </div>
@@ -112,11 +109,10 @@ export const AdminLayout: React.FC = () => {
         <MobileBottomNav />
       </div>
 
-      {/* Emergency Replan Modal */}
-      <EmergencyReplanModal
-        isOpen={emergencyModalOpen}
-        onClose={() => setEmergencyModalOpen(false)}
-      />
+      {/* Emergency Modal */}
+      {emergencyModalOpen && (
+        <EmergencyReplanModal onClose={() => setEmergencyModalOpen(false)} />
+      )}
     </div>
   )
 }

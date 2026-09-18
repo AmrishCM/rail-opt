@@ -65,23 +65,38 @@ export const RealtimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     const eventType = event.event_type || event.type
 
-    // Show toast for actionable updates
-    if (event.title || event.message) {
+    // Ignore routine connection / heartbeat events from creating toasts
+    const routineEvents = [
+      'connection_established',
+      'connected',
+      'ping',
+      'pong',
+      'user_presence',
+      'STATUS_HEARTBEAT'
+    ]
+
+    // Show toast only for actionable domain updates
+    if ((event.title || event.message) && !routineEvents.includes(eventType)) {
       const newId = `${Date.now()}-${Math.random().toString(36).substr(2, 4)}`
-      const isCrit = eventType.includes('CRITICAL') || eventType.includes('REPLAN')
+      const isCrit = eventType.includes('CRITICAL') || eventType.includes('REPLAN') || eventType.includes('BLOCKED')
+      const humanizedTitle = event.title || eventType.replace(/_/g, ' ')
       const newToast = {
         id: newId,
-        title: event.title || `Live Update: ${eventType}`,
-        message: event.message || 'System operational state changed.',
+        title: humanizedTitle,
+        message: event.message || 'Operational state updated.',
         type: isCrit ? 'critical' : 'info',
-        link: event.payload?.work_order_id ? '/engineer/pending-work' : (event.payload?.task_id ? '/manager/approval-planning' : undefined)
+        link: event.payload?.work_order_id
+          ? '/engineer/work-queue'
+          : event.payload?.task_id
+          ? '/manager/approval-planning'
+          : undefined
       }
       setToasts((prev) => [newToast, ...prev].slice(0, 4))
 
-      // Auto dismiss after 8 seconds
+      // Auto-dismiss after 4 seconds (Linear / Datadog spec)
       setTimeout(() => {
         setToasts((prev) => prev.filter((t) => t.id !== newId))
-      }, 8000)
+      }, 4000)
     }
 
     // Invalidate relevant query caches
@@ -305,32 +320,32 @@ export const RealtimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }}
     >
       {children}
-      {/* Toast popup stack for live domain events */}
+      {/* Toast popup stack for live domain events (fixed bottom-right corner, no overlap) */}
       {toasts.length > 0 && (
-        <div className="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 max-w-sm w-full pointer-events-none">
+        <div className="fixed bottom-6 right-6 z-50 flex flex-col space-y-2 max-w-sm w-full pointer-events-none">
           {toasts.map((t) => (
             <div
               key={t.id}
-              className={`pointer-events-auto p-3.5 rounded-xl border shadow-2xl backdrop-blur-md flex items-start space-x-3 transition-all animate-slide-up ${
+              className={`pointer-events-auto p-3.5 rounded-lg border shadow-2xl backdrop-blur-md flex items-start space-x-3 transition-all animate-in slide-in-from-bottom-2 duration-150 ${
                 t.type === 'critical'
-                  ? 'bg-rose-950/95 border-rose-600/80 text-rose-100 shadow-rose-900/20'
-                  : 'bg-slate-900/95 border-blue-500/60 text-white shadow-blue-900/20'
+                  ? 'bg-zinc-900 border-red-500/50 text-zinc-100 border-l-4 border-l-red-500'
+                  : 'bg-zinc-900 border-zinc-800 text-zinc-100 border-l-4 border-l-blue-500'
               }`}
             >
               <div className="flex-1 space-y-1">
                 <div className="flex items-center space-x-2">
                   <span
-                    className={`w-2 h-2 rounded-full ${
-                      t.type === 'critical' ? 'bg-rose-400 animate-pulse' : 'bg-blue-400'
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      t.type === 'critical' ? 'bg-red-500' : 'bg-blue-500'
                     }`}
                   />
-                  <h4 className="text-xs font-bold tracking-wide">{t.title}</h4>
+                  <h4 className="text-xs font-semibold tracking-wide text-zinc-100">{t.title}</h4>
                 </div>
-                <p className="text-[11px] text-slate-300 leading-snug">{t.message}</p>
+                <p className="text-[11px] text-zinc-400 leading-snug">{t.message}</p>
                 {t.link && (
                   <a
                     href={t.link}
-                    className="inline-block text-[10px] font-bold text-blue-400 hover:text-blue-300 underline pt-0.5"
+                    className="inline-block text-[10px] font-medium text-blue-400 hover:text-blue-300 font-mono pt-1"
                   >
                     View Details →
                   </a>
@@ -339,7 +354,8 @@ export const RealtimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
               <button
                 type="button"
                 onClick={() => removeToast(t.id)}
-                className="text-slate-400 hover:text-white text-xs px-1.5 py-0.5 rounded bg-slate-800/80 hover:bg-slate-800 transition shrink-0"
+                className="text-zinc-500 hover:text-zinc-200 text-xs p-1 rounded hover:bg-zinc-800 transition-colors shrink-0"
+                aria-label="Dismiss notification"
               >
                 ✕
               </button>

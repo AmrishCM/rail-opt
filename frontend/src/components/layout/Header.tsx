@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { useAuth, DemoUser, getRoleDashboardPath, toCanonicalRole } from '../../context/AuthContext'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { useAuth, getRoleDashboardPath, toCanonicalRole } from '../../context/AuthContext'
 import { useRealtime } from '../../context/RealtimeContext'
-import { fetchNotifications, markNotificationRead, fetchDatabaseHealth } from '../../services/api'
+import { fetchNotifications, markNotificationRead } from '../../services/api'
 import {
   Train,
   Bell,
@@ -12,12 +12,9 @@ import {
   LogOut,
   ChevronDown,
   Shield,
-  Activity,
+  Search,
   Check,
-  Sparkles,
   Layers,
-  Clock,
-  Database,
   X
 } from 'lucide-react'
 
@@ -27,8 +24,9 @@ export interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ onOpenEmergencyModal }) => {
   const { user, demoUsers, switchRole, logout } = useAuth()
-  const { connectionStatus, isConnected, onlineUsers } = useRealtime()
+  const { isConnected, onlineUsers } = useRealtime()
   const navigate = useNavigate()
+  const location = useLocation()
 
   const [roleModalOpen, setRoleModalOpen] = useState(false)
   const [helpModalOpen, setHelpModalOpen] = useState(false)
@@ -37,7 +35,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenEmergencyModal }) => {
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false)
   const [notifications, setNotifications] = useState<any[]>([])
   const [unreadCount, setUnreadCount] = useState<number>(0)
-  const [dbHealth, setDbHealth] = useState<{ connected: boolean; type: string; latency_ms: number } | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
 
   const handleConfirmLogout = async () => {
     setLogoutConfirmOpen(false)
@@ -47,33 +45,18 @@ export const Header: React.FC<HeaderProps> = ({ onOpenEmergencyModal }) => {
 
   useEffect(() => {
     loadNotifications()
-    loadDbHealth()
     const interval = setInterval(() => {
       loadNotifications()
-      loadDbHealth()
     }, 15000)
     return () => clearInterval(interval)
   }, [user])
 
-  const loadDbHealth = async () => {
-    try {
-      const data = await fetchDatabaseHealth()
-      if (data?.database) {
-        setDbHealth(data.database)
-      } else if (data?.connected !== undefined) {
-        setDbHealth(data)
-      }
-    } catch (e) {
-      setDbHealth({ connected: false, type: 'unknown', latency_ms: 0 })
-    }
-  }
-
   const loadNotifications = async () => {
     try {
       const data = await fetchNotifications()
-      setNotifications(data.items || [])
-      setUnreadCount(data.unread_count || 0)
-    } catch (e) {
+      setNotifications(data?.items || [])
+      setUnreadCount(data?.unread_count || 0)
+    } catch {
       // silent
     }
   }
@@ -92,259 +75,285 @@ export const Header: React.FC<HeaderProps> = ({ onOpenEmergencyModal }) => {
     try {
       await markNotificationRead(n.notification_id)
       loadNotifications()
-    } catch (e) {}
+    } catch {}
     setNotifOpen(false)
     if (n.link) {
       navigate(n.link)
     }
   }
 
+  // Derive humanized operational breadcrumbs from current route
+  const getBreadcrumb = () => {
+    const p = location.pathname
+    const canonical = toCanonicalRole(user?.role)
+    const roleLabel =
+      canonical === 'INSPECTOR'
+        ? 'Field Inspector'
+        : canonical === 'MANAGER'
+        ? 'Operations Manager'
+        : canonical === 'ENGINEER'
+        ? 'Maintenance Engineer'
+        : 'System Admin'
+
+    let pageLabel = 'Overview'
+    if (p.includes('timetable')) pageLabel = 'Timetable'
+    else if (p.includes('track-view')) pageLabel = 'Track Schematic'
+    else if (p.includes('report-issue') || p.includes('new')) pageLabel = 'Report Issue'
+    else if (p.includes('issues') || p.includes('work-queue')) pageLabel = 'Active Issues'
+    else if (p.includes('completed')) pageLabel = 'Completed Records'
+    else if (p.includes('approval-planning')) pageLabel = 'Approval & Planning'
+    else if (p.includes('status')) pageLabel = 'Issue Statuses'
+    else if (p.includes('replan')) pageLabel = 'Replanning'
+    else if (p.includes('resources')) pageLabel = 'Assets & Machinery'
+    else if (p.includes('authorities')) pageLabel = 'Authority Coordination'
+    else if (p.includes('audit')) pageLabel = 'Compliance Audit'
+    else if (p.includes('notifications')) pageLabel = 'Alerts & Logs'
+    else if (p.includes('profile')) pageLabel = 'Profile'
+
+    return { roleLabel, pageLabel }
+  }
+
+  const { roleLabel, pageLabel } = getBreadcrumb()
+
   const roleHelpContent: Record<string, { title: string; bullets: string[] }> = {
     MAINTENANCE_ENGINEER: {
-      title: 'Engineer Workflow Guide',
+      title: 'Maintenance Engineer Workflow',
       bullets: [
-        '1. Click "New Maintenance" to log a track, signal, or OHE defect.',
-        '2. Review the AI Urgency score (calculated from safety & asset criticality).',
-        '3. Click "Generate Maintenance Plan" to get a recommended coordinated block.',
-        '4. Review task assignments and submit the plan to the Operations Manager for approval.'
+        '1. Log track, signal, or OHE defects directly from field reports.',
+        '2. Review AI urgency scores derived from safety constraints and asset criticality.',
+        '3. Inspect recommended coordinated block windows.',
+        '4. Submit finalized block requests to Operations Manager for authorization.'
       ]
     },
     OPERATIONS_MANAGER: {
-      title: 'Operations Manager Workflow Guide',
+      title: 'Operations Manager Workflow',
       bullets: [
-        '1. Check "Action Required" on your dashboard for AI plans awaiting approval.',
-        '2. Review corridor train movements, safety margins, and department coordination.',
-        '3. Click "Approve Plan" to authorize corridor possession, or "Request Changes" with specific notes.',
-        '4. In case of unexpected signal/track failures, click "Report Critical Defect" to trigger an automated replan.'
+        '1. Review incoming AI-generated maintenance block schedules.',
+        '2. Verify train corridor availability, conflict detection, and sectional headway.',
+        '3. Authorize track possession or request adjustments with operational notes.',
+        '4. Trigger dynamic replanning in response to unplanned field failures or delays.'
       ]
     },
     FIELD_INSPECTOR: {
-      title: 'Field Inspector Guide',
+      title: 'Field Inspector Workflow',
       bullets: [
-        '1. View today’s assigned maintenance blocks on Section C2-02.',
-        '2. Click "Start Work" to record possession start time.',
-        '3. Upload post-welding ultrasonic inspection photos or track clearance evidence.',
-        '4. Click "Complete Work" with actual duration and completion notes.'
+        '1. View active section assignments and scheduled maintenance windows.',
+        '2. Record work commencement upon receiving track possession authority.',
+        '3. Attach completion evidence, ultrasonic test logs, and photographic records.',
+        '4. Mark work verified to clear track blocks in the dynamic timetable.'
       ]
     },
     SYSTEM_ADMIN: {
-      title: 'System Administrator Guide',
+      title: 'System Administrator Workflow',
       bullets: [
-        '1. Access the CP-SAT optimization engine telemetry and branch statistics.',
-        '2. Review complete compliance audit logs.',
-        '3. Click "Reset Demo Scenario" at any time to restore the deterministic SIH evaluation state.'
+        '1. Inspect CP-SAT optimization telemetry and solver iteration diagnostics.',
+        '2. Audit state-machine logs and compliance records across all divisions.',
+        '3. Manage system roles, permissions, and deterministic evaluation states.'
       ]
     }
   }
 
-  const currentHelp = roleHelpContent[user?.role || 'MAINTENANCE_ENGINEER'] || roleHelpContent.MAINTENANCE_ENGINEER
+  const currentHelp =
+    roleHelpContent[user?.role || 'MAINTENANCE_ENGINEER'] || roleHelpContent.MAINTENANCE_ENGINEER
 
   return (
     <>
-      {/* Top Navbar */}
-      <header className="bg-slate-900 border-b border-slate-800 text-slate-100 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between h-14">
-          {/* Brand Logo & Product Name */}
-          <div className="flex items-center space-x-3">
-            <Link to={getRoleDashboardPath(user?.role)} className="flex items-center space-x-2.5">
-              <div className="w-8 h-8 rounded bg-rail-maroon flex items-center justify-center text-white font-black text-sm tracking-tighter">
-                <Train className="w-4 h-4 text-white" />
+      {/* Persistent Enterprise Top Bar (Row 1) */}
+      <header className="bg-zinc-950 border-b border-zinc-800 text-zinc-100 sticky top-0 z-40">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 flex items-center justify-between h-14 gap-4">
+          {/* Left: Brand Logo & Navigation Breadcrumb */}
+          <div className="flex items-center space-x-3 shrink-0">
+            <Link
+              to={getRoleDashboardPath(user?.role)}
+              className="flex items-center space-x-2.5 group focus-visible:outline-none"
+            >
+              <div className="w-7 h-7 rounded-md bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-100 transition-colors group-hover:border-zinc-700">
+                <Train className="w-3.5 h-3.5" strokeWidth={1.5} />
               </div>
-              <div className="flex items-center space-x-2">
-                <span className="font-black text-base tracking-tight text-white leading-none">
-                  RAILOPT
-                </span>
-                <span className="hidden sm:inline-block text-xs font-semibold text-slate-400 pl-2 border-l border-slate-700">
-                  Operations <span className="text-slate-600">|</span> Planning <span className="text-slate-600">|</span> Safety
-                </span>
-              </div>
-            </Link>
-          </div>
-
-          {/* Center: Global Status Bar (Section 42) */}
-          <div className="hidden lg:flex items-center space-x-3 px-3 py-1.5 rounded-full bg-slate-800/80 border border-slate-700/60 text-xs">
-            <div className="flex items-center space-x-1.5 text-slate-300">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="font-semibold text-slate-200">{user?.full_name || 'Engineer Ravi Verma'}</span>
-              <span className="text-slate-500">•</span>
-              <span className="text-blue-400 font-bold">{user?.department || 'Engineering/Track'}</span>
-              <span className="text-slate-500">•</span>
-              <span className="text-slate-400 font-mono">{user?.section_code || 'C2-02'}</span>
-            </div>
-            <div className="h-3 w-px bg-slate-700" />
-            <div className="flex items-center space-x-2 text-[11px] text-slate-400">
-              <span>Status: <strong className="text-emerald-400">Operational</strong></span>
-              <span>•</span>
-              <span className="flex items-center space-x-1">
-                <Database className="w-3 h-3 text-slate-400" />
-                <span>Database:</span>
-                {dbHealth?.connected ? (
-                  dbHealth.type === 'postgresql' ? (
-                    <span className="inline-flex items-center space-x-1 text-emerald-400 font-bold">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                      <span>Connected</span>
-                      <span className="text-[9px] text-slate-400 font-normal">({dbHealth.latency_ms}ms)</span>
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center space-x-1 text-amber-400 font-bold">
-                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                      <span>SQLite Development Mode</span>
-                      <span className="text-[9px] text-slate-400 font-normal">({dbHealth.latency_ms}ms)</span>
-                    </span>
-                  )
-                ) : (
-                  <span className="inline-flex items-center space-x-1 text-rose-400 font-bold">
-                    <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
-                    <span>Disconnected</span>
-                  </span>
-                )}
+              <span className="font-bold text-sm tracking-tight text-zinc-100 font-mono">
+                RAILOPT
               </span>
+            </Link>
+
+            <div className="h-4 w-px bg-zinc-800 hidden sm:block" />
+
+            {/* Clean Breadcrumb Hierarchy */}
+            <nav className="hidden sm:flex items-center space-x-1.5 text-xs text-zinc-400">
+              <span>Operations</span>
+              <span className="text-zinc-600">/</span>
+              <span className="text-zinc-300 font-medium">{roleLabel}</span>
+              <span className="text-zinc-600">/</span>
+              <span className="text-zinc-100 font-semibold">{pageLabel}</span>
+            </nav>
+          </div>
+
+          {/* Center: Minimal Command / Search Box */}
+          <div className="flex-1 max-w-md hidden md:block">
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" strokeWidth={1.5} />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search issues, blocks, assets..."
+                className="w-full bg-zinc-900/60 border border-zinc-800 rounded-md pl-9 pr-14 py-1.5 text-xs text-zinc-200 placeholder:text-zinc-500 focus:bg-zinc-900 focus:border-zinc-700 focus:outline-none transition-colors"
+              />
+              <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
+                <kbd className="text-[10px] font-mono text-zinc-500 px-1 py-0.5 rounded border border-zinc-800 bg-zinc-950">
+                  ⌘K
+                </kbd>
+              </div>
             </div>
           </div>
 
-          {/* Right: Actions, Role Switcher, Notifications, Help */}
-          <div className="flex items-center space-x-2 sm:space-x-3">
-            {/* Realtime WebSocket Connection Status (Section 11 & 61) */}
+          {/* Right: Realtime status, Emergency (Manager/Admin), Notifications, User Menu */}
+          <div className="flex items-center space-x-2 shrink-0">
+            {/* Realtime Connected Indicator: Single Accent Color Only */}
             <div
-              className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold border transition-all ${
-                isConnected
-                  ? 'bg-emerald-950/70 text-emerald-300 border-emerald-700/80 shadow-[0_0_10px_rgba(16,185,129,0.2)]'
-                  : connectionStatus === 'connecting' || connectionStatus === 'reconnecting'
-                  ? 'bg-amber-950/70 text-amber-300 border-amber-700/80 animate-pulse'
-                  : 'bg-rose-950/70 text-rose-300 border-rose-700/80'
-              }`}
+              className="flex items-center space-x-1.5 px-2 py-1 rounded-md text-xs text-zinc-400 select-none hover:bg-zinc-900/60 transition-colors"
               title={
                 isConnected
-                  ? 'Realtime event bus connected. All users see live updates without refresh.'
-                  : 'Connecting to server event bus... Operations polling active.'
+                  ? `Live bus connected (${onlineUsers.length} operators active)`
+                  : 'Reconnecting to event bus...'
               }
             >
               <span
-                className={`w-2 h-2 rounded-full ${
-                  isConnected
-                    ? 'bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.9)]'
-                    : 'bg-amber-400 animate-ping'
+                className={`w-1.5 h-1.5 rounded-full ${
+                  isConnected ? 'bg-blue-500' : 'bg-amber-500 animate-ping'
                 }`}
               />
-              <span className="hidden md:inline">Realtime:</span>
-              <span>{isConnected ? '● Connected' : '○ Reconnecting...'}</span>
-              {onlineUsers.length > 0 && (
-                <span className="hidden xl:inline text-[10px] text-slate-400 font-normal pl-1 border-l border-slate-700">
-                  {onlineUsers.length} online
-                </span>
-              )}
+              <span className="text-[11px] font-medium hidden sm:inline">
+                {isConnected ? 'Live' : 'Syncing'}
+              </span>
             </div>
 
-            {/* Quick Emergency Defect Button (Manager & Admin only) */}
+            {/* Quick Emergency Defect Action (Manager & Admin only, no flashy glow) */}
             {['MANAGER', 'ADMIN'].includes(toCanonicalRole(user?.role)) && (
               <button
                 onClick={onOpenEmergencyModal}
-                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-red-600/90 hover:bg-red-600 text-white text-xs font-bold transition-all shadow-sm shadow-red-500/20"
-                title="Report unexpected critical condition to trigger dynamic replanning"
+                className="hidden sm:inline-flex items-center space-x-1.5 px-2.5 py-1.5 rounded-md border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-medium transition-colors active:translate-y-[1px]"
+                title="Trigger dynamic replan for critical track or signalling failure"
               >
-                <AlertOctagon className="w-3.5 h-3.5 animate-bounce" />
-                <span className="hidden sm:inline">Emergency Defect</span>
+                <AlertOctagon className="w-3.5 h-3.5" strokeWidth={1.5} />
+                <span>Critical Defect</span>
               </button>
             )}
 
-            {/* 1-Click Role Switcher */}
+            {/* Role Switcher Button */}
             <button
               onClick={() => setRoleModalOpen(true)}
-              className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-medium text-slate-200 transition-all"
+              className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-md border border-zinc-800 bg-zinc-900/80 hover:bg-zinc-800 text-xs font-medium text-zinc-300 transition-colors active:translate-y-[1px]"
+              title="Switch operational demo role"
             >
-              <Shield className="w-3.5 h-3.5 text-blue-400" />
-              <span className="font-bold truncate max-w-[120px]">{user?.role?.replace('_', ' ') || 'ENGINEER'}</span>
-              <ChevronDown className="w-3 h-3 text-slate-400" />
+              <Shield className="w-3.5 h-3.5 text-zinc-400" strokeWidth={1.5} />
+              <span className="truncate max-w-[110px] hidden sm:inline">
+                {user?.role ? user.role.replace(/_/g, ' ') : 'Role'}
+              </span>
+              <ChevronDown className="w-3 h-3 text-zinc-500" strokeWidth={1.5} />
             </button>
 
-            {/* Notifications Bell */}
+            {/* Notifications Popover Trigger */}
             <div className="relative">
               <button
                 onClick={() => setNotifOpen(!notifOpen)}
-                className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 flex items-center justify-center text-slate-300 relative transition-colors"
-                title="Notifications"
+                className="w-8 h-8 rounded-md border border-zinc-800 bg-zinc-900/80 hover:bg-zinc-800 flex items-center justify-center text-zinc-400 hover:text-zinc-200 transition-colors relative active:translate-y-[1px]"
+                title="Operational Notifications"
               >
-                <Bell className="w-4 h-4" />
+                <Bell className="w-3.5 h-3.5" strokeWidth={1.5} />
                 {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-black flex items-center justify-center">
-                    {unreadCount}
-                  </span>
+                  <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-blue-500" />
                 )}
               </button>
 
               {/* Notifications Dropdown */}
               {notifOpen && (
-                <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white text-slate-900 rounded-xl shadow-xl border border-slate-200 py-2 z-50">
-                  <div className="px-4 py-2 border-b border-slate-100 flex items-center justify-between">
-                    <span className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">
-                      Operations Notifications
+                <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-zinc-900 text-zinc-100 rounded-lg shadow-2xl border border-zinc-800 py-2 z-50 animate-in fade-in-50 duration-100">
+                  <div className="px-3.5 py-2 border-b border-zinc-800 flex items-center justify-between">
+                    <span className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">
+                      Notifications
                     </span>
-                    <span className="text-[10px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full font-bold">
-                      {unreadCount} Unread
-                    </span>
+                    {unreadCount > 0 && (
+                      <span className="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded border border-blue-500/20 font-mono">
+                        {unreadCount} unread
+                      </span>
+                    )}
                   </div>
-                  <div className="max-h-72 overflow-y-auto divide-y divide-slate-100 text-xs">
+                  <div className="max-h-72 overflow-y-auto divide-y divide-zinc-800/60 text-xs">
                     {notifications.length === 0 ? (
-                      <div className="p-4 text-center text-slate-400 text-xs">No notifications right now</div>
+                      <div className="p-6 text-center text-zinc-500 text-xs">
+                        No active notifications
+                      </div>
                     ) : (
                       notifications.slice(0, 6).map((n) => (
                         <div
                           key={n.notification_id}
                           onClick={() => handleNotificationClick(n)}
-                          className={`p-3 cursor-pointer hover:bg-slate-50 transition-colors ${
-                            !n.is_read ? 'bg-blue-50/50' : ''
+                          className={`p-3 cursor-pointer hover:bg-zinc-800/60 transition-colors ${
+                            !n.is_read ? 'bg-zinc-800/30' : ''
                           }`}
                         >
-                          <div className="flex items-center justify-between font-bold text-slate-900 text-xs">
+                          <div className="flex items-center justify-between font-medium text-zinc-200 text-xs">
                             <span className="truncate">{n.title}</span>
-                            <span className="text-[9px] text-slate-400 shrink-0 font-normal">
-                              {n.created_at ? new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Now'}
+                            <span className="text-[10px] text-zinc-500 font-mono shrink-0">
+                              {n.created_at
+                                ? new Date(n.created_at).toLocaleTimeString([], {
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })
+                                : 'Recent'}
                             </span>
                           </div>
-                          <p className="text-slate-600 text-[11px] mt-0.5 line-clamp-2">{n.message}</p>
+                          <p className="text-zinc-400 text-[11px] mt-0.5 line-clamp-2">
+                            {n.message}
+                          </p>
                         </div>
                       ))
                     )}
                   </div>
-                  <div className="p-2 border-t border-slate-100 text-center">
+                  <div className="p-2 border-t border-zinc-800 text-center">
                     <button
                       onClick={() => setNotifOpen(false)}
-                      className="text-[11px] font-bold text-slate-500 hover:text-slate-700"
+                      className="text-xs font-medium text-zinc-400 hover:text-zinc-200 py-1"
                     >
-                      Close
+                      Dismiss
                     </button>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* User Account Menu (Section 14 & 42) */}
+            {/* User Profile / Menu */}
             <div className="relative">
               <button
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="flex items-center space-x-2 pl-2 pr-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 transition-all text-xs"
+                className="flex items-center space-x-2 pl-1.5 pr-2 py-1 rounded-md border border-zinc-800 bg-zinc-900/80 hover:bg-zinc-800 text-zinc-200 transition-colors text-xs active:translate-y-[1px]"
                 title="Account Menu"
               >
-                <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center font-black text-white text-[11px]">
+                <div className="w-6 h-6 rounded bg-zinc-800 border border-zinc-700 flex items-center justify-center font-mono font-medium text-zinc-200 text-[11px]">
                   {user?.full_name ? user.full_name.charAt(0) : 'U'}
                 </div>
-                <span className="font-bold hidden md:inline truncate max-w-[100px]">
-                  {user?.full_name?.split(' ')[0] || 'Account'}
+                <span className="font-medium hidden md:inline truncate max-w-[100px] text-zinc-300">
+                  {user?.full_name?.split(' ')[0] || 'User'}
                 </span>
-                <ChevronDown className="w-3 h-3 text-slate-400" />
+                <ChevronDown className="w-3 h-3 text-zinc-500" strokeWidth={1.5} />
               </button>
 
               {/* User Dropdown */}
               {userMenuOpen && (
-                <div className="absolute right-0 mt-2 w-64 bg-white text-slate-900 rounded-xl shadow-xl border border-slate-200 py-2 z-50">
-                  <div className="px-4 py-2.5 border-b border-slate-100">
-                    <p className="font-black text-xs text-slate-900 truncate">{user?.full_name}</p>
-                    <div className="flex items-center space-x-1.5 mt-0.5">
-                      <span className="text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-blue-50 text-blue-700">
-                        {user?.role?.replace('_', ' ')}
+                <div className="absolute right-0 mt-2 w-64 bg-zinc-900 text-zinc-100 rounded-lg shadow-2xl border border-zinc-800 py-2 z-50 animate-in fade-in-50 duration-100">
+                  <div className="px-3.5 py-2.5 border-b border-zinc-800">
+                    <p className="font-semibold text-xs text-zinc-200 truncate">
+                      {user?.full_name || 'Operator'}
+                    </p>
+                    <p className="text-[11px] text-zinc-400 mt-0.5 truncate">
+                      {user?.email || 'operator@railopt.demo'}
+                    </p>
+                    <div className="flex items-center space-x-1.5 mt-2">
+                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700">
+                        {user?.role ? user.role.replace(/_/g, ' ') : 'USER'}
                       </span>
-                      <span className="text-[10px] text-slate-400 font-mono">
-                        {user?.section_code || user?.department}
+                      <span className="text-[10px] text-zinc-400 font-mono">
+                        {user?.section_code || user?.department || 'Operational'}
                       </span>
                     </div>
                   </div>
@@ -353,19 +362,10 @@ export const Header: React.FC<HeaderProps> = ({ onOpenEmergencyModal }) => {
                     <Link
                       to="/profile"
                       onClick={() => setUserMenuOpen(false)}
-                      className="flex items-center space-x-2.5 px-4 py-2 hover:bg-slate-50 text-slate-700 font-medium"
+                      className="flex items-center space-x-2.5 px-3.5 py-2 hover:bg-zinc-800/60 text-zinc-300 transition-colors"
                     >
-                      <UserCheck className="w-4 h-4 text-slate-400" />
-                      <span>My Profile</span>
-                    </Link>
-
-                    <Link
-                      to="/maintenance"
-                      onClick={() => setUserMenuOpen(false)}
-                      className="flex items-center space-x-2.5 px-4 py-2 hover:bg-slate-50 text-slate-700 font-medium"
-                    >
-                      <Layers className="w-4 h-4 text-slate-400" />
-                      <span>My Work</span>
+                      <UserCheck className="w-4 h-4 text-zinc-500" strokeWidth={1.5} />
+                      <span>Profile Settings</span>
                     </Link>
 
                     <button
@@ -373,23 +373,23 @@ export const Header: React.FC<HeaderProps> = ({ onOpenEmergencyModal }) => {
                         setUserMenuOpen(false)
                         setHelpModalOpen(true)
                       }}
-                      className="w-full flex items-center space-x-2.5 px-4 py-2 hover:bg-slate-50 text-slate-700 font-medium text-left"
+                      className="w-full flex items-center space-x-2.5 px-3.5 py-2 hover:bg-zinc-800/60 text-zinc-300 transition-colors text-left"
                     >
-                      <HelpCircle className="w-4 h-4 text-slate-400" />
+                      <HelpCircle className="w-4 h-4 text-zinc-500" strokeWidth={1.5} />
                       <span>Workflow Guide</span>
                     </button>
                   </div>
 
-                  <div className="border-t border-slate-100 pt-1">
+                  <div className="border-t border-zinc-800 pt-1">
                     <button
                       onClick={() => {
                         setUserMenuOpen(false)
                         setLogoutConfirmOpen(true)
                       }}
-                      className="w-full flex items-center space-x-2.5 px-4 py-2 hover:bg-red-50 text-red-600 font-bold text-left text-xs transition-colors"
+                      className="w-full flex items-center space-x-2.5 px-3.5 py-2 hover:bg-zinc-800/60 text-red-400 font-medium text-left text-xs transition-colors"
                     >
-                      <LogOut className="w-4 h-4" />
-                      <span>Logout</span>
+                      <LogOut className="w-4 h-4" strokeWidth={1.5} />
+                      <span>Sign Out</span>
                     </button>
                   </div>
                 </div>
@@ -399,29 +399,26 @@ export const Header: React.FC<HeaderProps> = ({ onOpenEmergencyModal }) => {
         </div>
       </header>
 
-      {/* Logout Confirmation Modal (Section 15 & 41) */}
+      {/* Logout Confirmation Modal */}
       {logoutConfirmOpen && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full border border-slate-200 shadow-2xl space-y-4">
-            <div className="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center">
-              <LogOut className="w-5 h-5" />
-            </div>
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="bg-zinc-900 rounded-lg p-6 max-w-sm w-full border border-zinc-800 shadow-2xl space-y-4">
             <div>
-              <h3 className="text-base font-black text-slate-900">Sign out of RailOpt-AI?</h3>
-              <p className="text-xs text-slate-500 mt-1">
-                Your operational session will be closed. You will need to sign in again to access maintenance plans, execution logs, and approvals.
+              <h3 className="text-sm font-semibold text-zinc-100">Sign out of RailOpt?</h3>
+              <p className="text-xs text-zinc-400 mt-1.5 leading-relaxed">
+                Your operational session will be closed. Re-authenticate to access maintenance plans, execution logs, and approvals.
               </p>
             </div>
             <div className="flex items-center justify-end space-x-2 pt-2">
               <button
                 onClick={() => setLogoutConfirmOpen(false)}
-                className="px-4 py-2 text-xs font-bold text-slate-600 hover:text-slate-800 rounded-xl hover:bg-slate-100"
+                className="px-3 py-1.5 text-xs font-medium text-zinc-400 hover:text-zinc-200 rounded-md hover:bg-zinc-800 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmLogout}
-                className="px-4 py-2 text-xs font-bold bg-red-600 hover:bg-red-700 text-white rounded-xl shadow-sm"
+                className="px-3 py-1.5 text-xs font-medium bg-red-600 hover:bg-red-500 text-white rounded-md transition-colors"
               >
                 Sign Out
               </button>
@@ -430,22 +427,24 @@ export const Header: React.FC<HeaderProps> = ({ onOpenEmergencyModal }) => {
         </div>
       )}
 
-      {/* 1-Click Role Switcher Modal (Section 15: Demo Accounts) */}
+      {/* 1-Click Role Switcher Modal (Sentence Case, Clean Neutral Treatment) */}
       {roleModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-xl w-full p-6 border border-slate-200">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-xs">
+          <div className="bg-zinc-900 rounded-lg shadow-2xl max-w-xl w-full p-6 border border-zinc-800">
+            <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
               <div>
-                <h3 className="text-lg font-black text-slate-900">Switch Operational Role (1-Click Demo)</h3>
-                <p className="text-xs text-slate-500">
-                  Select a railway role to view its dedicated workflow, permissions, and dashboard.
+                <h3 className="text-sm font-semibold text-zinc-100">
+                  Switch Operational Role
+                </h3>
+                <p className="text-xs text-zinc-400 mt-0.5">
+                  Select an authenticated railway role to view its dedicated workflow and permissions.
                 </p>
               </div>
               <button
                 onClick={() => setRoleModalOpen(false)}
-                className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500"
+                className="w-7 h-7 rounded-md bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center text-zinc-400 hover:text-zinc-200 transition-colors"
               >
-                <X className="w-4 h-4" />
+                <X className="w-4 h-4" strokeWidth={1.5} />
               </button>
             </div>
 
@@ -456,28 +455,32 @@ export const Header: React.FC<HeaderProps> = ({ onOpenEmergencyModal }) => {
                   <button
                     key={u.email}
                     onClick={() => handleSwitchUser(u.email)}
-                    className={`p-3.5 rounded-xl border text-left transition-all ${
+                    className={`p-3 rounded-lg border text-left transition-colors ${
                       isActive
-                        ? 'border-blue-600 bg-blue-50/60 ring-2 ring-blue-500/20 shadow-xs'
-                        : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                        ? 'border-blue-500/50 bg-blue-500/10'
+                        : 'border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800/40 bg-zinc-900'
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="font-extrabold text-xs text-slate-900">{u.display_title}</span>
-                      {isActive && <Check className="w-4 h-4 text-blue-600" />}
+                      <span className="font-semibold text-xs text-zinc-200">
+                        {u.display_title}
+                      </span>
+                      {isActive && <Check className="w-3.5 h-3.5 text-blue-400" strokeWidth={2} />}
                     </div>
-                    <div className="text-[11px] font-semibold text-blue-700 mt-0.5">{u.full_name}</div>
-                    <div className="text-[10px] text-slate-500 mt-1 line-clamp-2">{u.description}</div>
+                    <div className="text-[11px] text-zinc-400 mt-0.5">{u.full_name}</div>
+                    <div className="text-[10px] text-zinc-500 mt-1 line-clamp-2 leading-tight">
+                      {u.description}
+                    </div>
                   </button>
                 )
               })}
             </div>
 
-            <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
-              <span>Default password for all accounts: <strong>RailOpt@2026</strong></span>
+            <div className="mt-5 pt-3 border-t border-zinc-800 flex items-center justify-between text-xs text-zinc-500">
+              <span>All accounts use deterministic operational test records.</span>
               <button
                 onClick={() => setRoleModalOpen(false)}
-                className="px-4 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold"
+                className="px-3 py-1.5 rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-medium text-xs transition-colors"
               >
                 Close
               </button>
@@ -486,50 +489,56 @@ export const Header: React.FC<HeaderProps> = ({ onOpenEmergencyModal }) => {
         </div>
       )}
 
-      {/* Built-in Help Modal (Section 39 & 40) */}
+      {/* Built-in Workflow Guide Modal */}
       {helpModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 border border-slate-200 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-xs">
+          <div className="bg-zinc-900 rounded-lg shadow-2xl max-w-lg w-full p-6 border border-zinc-800 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
               <div>
-                <span className="text-[10px] font-bold uppercase text-blue-600 tracking-wider">How this works</span>
-                <h3 className="text-lg font-black text-slate-900">{currentHelp.title}</h3>
+                <span className="text-[10px] font-semibold uppercase text-zinc-400 tracking-wider">
+                  Operational Reference
+                </span>
+                <h3 className="text-sm font-semibold text-zinc-100 mt-0.5">
+                  {currentHelp.title}
+                </h3>
               </div>
               <button
                 onClick={() => setHelpModalOpen(false)}
-                className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500"
+                className="w-7 h-7 rounded-md bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center text-zinc-400 hover:text-zinc-200 transition-colors"
               >
-                <X className="w-4 h-4" />
+                <X className="w-4 h-4" strokeWidth={1.5} />
               </button>
             </div>
 
-            <div className="p-3.5 bg-blue-50 rounded-xl border border-blue-100 text-xs text-blue-950 space-y-2">
-              <p className="font-semibold">
-                RailOpt-AI coordinates track, signalling, and traction maintenance automatically behind the scenes.
+            <div className="p-3 bg-zinc-950 border border-zinc-800 rounded-md text-xs text-zinc-300 space-y-1.5">
+              <p className="font-medium text-zinc-200">
+                Coordinated Track, Signalling & Traction Scheduling
               </p>
-              <p className="text-blue-800">
-                You do not need to understand optimization algorithms, machine learning models, or mathematical formulas to use this application.
+              <p className="text-zinc-400 text-[11px] leading-relaxed">
+                RailOpt optimizes maintenance block possessions to eliminate headway conflicts while maintaining safety integrity.
               </p>
             </div>
 
-            <div className="space-y-2.5">
-              <h4 className="text-xs font-bold uppercase text-slate-500">Your Action Steps:</h4>
-              <ul className="space-y-2 text-xs text-slate-700">
+            <div className="space-y-2">
+              <h4 className="text-[11px] font-semibold uppercase text-zinc-400 tracking-wider">
+                Workflow Actions:
+              </h4>
+              <ul className="space-y-1.5 text-xs text-zinc-300">
                 {currentHelp.bullets.map((b, idx) => (
                   <li key={idx} className="flex items-start space-x-2">
-                    <span className="text-blue-600 font-bold shrink-0">•</span>
-                    <span>{b}</span>
+                    <span className="text-blue-400 font-mono shrink-0">•</span>
+                    <span className="leading-snug">{b}</span>
                   </li>
                 ))}
               </ul>
             </div>
 
-            <div className="pt-3 border-t border-slate-100 text-right">
+            <div className="pt-3 border-t border-zinc-800 text-right">
               <button
                 onClick={() => setHelpModalOpen(false)}
-                className="px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs"
+                className="px-3 py-1.5 rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-medium text-xs transition-colors"
               >
-                Understood
+                Dismiss
               </button>
             </div>
           </div>
@@ -538,3 +547,5 @@ export const Header: React.FC<HeaderProps> = ({ onOpenEmergencyModal }) => {
     </>
   )
 }
+
+export default Header
