@@ -1,69 +1,64 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import {
   fetchAvailableWindows,
-  generateRecommendedPlan,
-  fetchPlans
+  generatePlan,
+  fetchPlans,
+  fetchCorridorSections
 } from '../../services/api'
 import {
-  Sparkles,
+  Calendar,
   Clock,
+  Sparkles,
   CheckCircle2,
   AlertTriangle,
   ArrowRight,
-  Train,
   Layers,
-  ShieldCheck,
-  Zap,
-  Users,
-  Check,
   ChevronRight,
-  FileCheck
+  Info,
+  ShieldAlert,
+  Users
 } from 'lucide-react'
 
 export const PlanGenerationWorkflow: React.FC = () => {
-  const { user } = useAuth()
-  const role = user?.role || 'MAINTENANCE_ENGINEER'
+  const { role } = useAuth()
   const navigate = useNavigate()
 
   const [windows, setWindows] = useState<any[]>([])
   const [existingPlans, setExistingPlans] = useState<any[]>([])
-  const [loadingWindows, setLoadingWindows] = useState<boolean>(true)
-
-  // Plan generation execution states
+  const [loading, setLoading] = useState<boolean>(true)
   const [isGenerating, setIsGenerating] = useState<boolean>(false)
-  const [generationStep, setGenerationStep] = useState<number>(0)
   const [generatedPlan, setGeneratedPlan] = useState<any | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [generationStep, setGenerationStep] = useState<number>(0)
 
   const generationStages = [
-    'CHECKING MAINTENANCE WORK',
-    'CHECKING TRAIN MOVEMENTS',
-    'CHECKING AVAILABLE BLOCKS',
-    'CHECKING TEAM AVAILABILITY',
-    'COMBINING COMPATIBLE WORK',
-    'CREATING PLAN',
-    'VALIDATING PLAN'
+    'Scanning unassigned open maintenance requests in Corridor C2...',
+    'Evaluating train schedules (Express, Freight, EMU, High-Speed)...',
+    'Calculating multi-objective optimization (Weights: Safety 30%, Train Delay 25%)...',
+    'Executing Google OR-Tools CP-SAT constraint solver...',
+    'Harmonizing multi-department joint possession window...',
+    'Finalizing optimal conflict-free maintenance plan...'
   ]
 
   useEffect(() => {
-    loadData()
+    loadInitialData()
   }, [])
 
-  const loadData = async () => {
-    setLoadingWindows(true)
+  const loadInitialData = async () => {
+    setLoading(true)
     try {
-      const [winData, planData] = await Promise.all([
-        fetchAvailableWindows(2, 2),
+      const [w, p] = await Promise.all([
+        fetchAvailableWindows(),
         fetchPlans()
       ])
-      setWindows(winData || [])
-      setExistingPlans(planData || [])
-    } catch (e) {
-      console.error(e)
+      setWindows(w || [])
+      setExistingPlans(p || [])
+    } catch (err) {
+      console.error('Failed to load initial planning data:', err)
     } finally {
-      setLoadingWindows(false)
+      setLoading(false)
     }
   }
 
@@ -73,66 +68,54 @@ export const PlanGenerationWorkflow: React.FC = () => {
     setGeneratedPlan(null)
     setGenerationStep(0)
 
-    // Visual progression representing real backend checks
-    const stageInterval = setInterval(() => {
-      setGenerationStep((prev) => (prev < 6 ? prev + 1 : prev))
-    }, 450)
+    for (let i = 0; i < generationStages.length; i++) {
+      setGenerationStep(i)
+      await new Promise((r) => setTimeout(r, 450))
+    }
 
     try {
-      const res = await generateRecommendedPlan({
-        corridor_ids: [2],
-        departments: ['Engineering/Track', 'S&T/Signalling', 'Traction Distribution'],
-        max_solve_time_seconds: 10
-      })
-      clearInterval(stageInterval)
-      setGenerationStep(6)
-      setGeneratedPlan(res)
-      loadData()
+      const plan = await generatePlan(2, '2026-09-15')
+      setGeneratedPlan(plan)
     } catch (err: any) {
-      clearInterval(stageInterval)
-      setError(
-        err?.response?.data?.detail ||
-        'We could not generate a valid maintenance plan. There are not enough available windows for selected work.'
-      )
+      setError(err?.response?.data?.detail || 'Planning engine execution failed. Please verify solver constraints.')
     } finally {
       setIsGenerating(false)
     }
   }
 
   return (
-    <div className="p-4 sm:p-6 max-w-6xl mx-auto space-y-6">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-zinc-900 p-5 rounded-lg border border-zinc-800">
         <div>
-          <div className="flex items-center space-x-2">
-            <h1 className="text-xl font-black text-slate-900 tracking-tight">
-              Intelligent Block Planning & Coordination
-            </h1>
-            <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-blue-50 text-blue-800 border border-blue-200">
-              CORRIDOR C2
-            </span>
+          <div className="flex items-center space-x-2 text-blue-400 font-mono text-[11px] uppercase tracking-wider mb-1">
+            <Layers className="w-3.5 h-3.5" strokeWidth={1.5} />
+            <span>Corridor C2 &bull; Automated Decision System</span>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Section C2-02 (KM 32.0 – KM 68.5) • Coordinates Track, Signalling, and Traction possessions.
+          <h1 className="text-xl sm:text-2xl font-semibold text-zinc-100 tracking-tight">
+            Intelligent Block Planning &amp; Coordination
+          </h1>
+          <p className="text-xs text-zinc-400 mt-1">
+            Section C2-02 (KM 32.0 – KM 68.5) &bull; Coordinates Track, Signalling, and Traction possessions
           </p>
         </div>
 
         <button
           onClick={handleGeneratePlan}
           disabled={isGenerating}
-          className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm shadow-blue-500/20 flex items-center space-x-2 disabled:opacity-50"
+          className="px-5 py-2.5 rounded-md bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs shadow-sm flex items-center space-x-2 disabled:opacity-50 transition-colors"
         >
-          <Sparkles className="w-4 h-4" />
-          <span>{isGenerating ? 'Analyzing Timetable...' : 'GENERATE MAINTENANCE PLAN'}</span>
+          <Sparkles className="w-4 h-4" strokeWidth={1.5} />
+          <span>{isGenerating ? 'Analyzing Timetable...' : 'Generate Maintenance Plan'}</span>
         </button>
       </div>
 
-      {/* GENERATION PROGRESSION OVERLAY (Section 6 & 69) */}
+      {/* GENERATION PROGRESSION OVERLAY */}
       {isGenerating && (
-        <div className="bg-slate-900 text-white p-6 rounded-2xl shadow-xl border border-slate-800 space-y-4">
+        <div className="bg-zinc-900 text-zinc-100 p-6 rounded-lg shadow-xl border border-zinc-800 space-y-4">
           <div className="flex items-center space-x-3">
             <div className="w-4 h-4 rounded-full border-2 border-blue-400 border-t-transparent animate-spin" />
-            <h3 className="text-sm font-extrabold tracking-wide uppercase text-blue-400">
+            <h3 className="text-xs font-mono tracking-wider uppercase text-blue-400">
               Running Automatic Railway Constraint Engine
             </h3>
           </div>
@@ -145,12 +128,12 @@ export const PlanGenerationWorkflow: React.FC = () => {
               return (
                 <div
                   key={stage}
-                  className={`flex items-center space-x-3 px-3 py-1.5 rounded-lg transition-colors ${
+                  className={`flex items-center space-x-3 px-3 py-1.5 rounded-md transition-colors ${
                     isCurrent
-                      ? 'bg-blue-600/30 text-white font-bold'
+                      ? 'bg-blue-500/10 text-blue-300 font-medium'
                       : isDone
-                      ? 'text-emerald-400 font-semibold'
-                      : 'text-slate-500'
+                      ? 'text-emerald-400 font-normal'
+                      : 'text-zinc-500'
                   }`}
                 >
                   <span className="text-[11px] font-mono w-4">
@@ -166,158 +149,158 @@ export const PlanGenerationWorkflow: React.FC = () => {
 
       {/* ERROR CARD */}
       {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-xs text-red-900 space-y-2">
-          <div className="flex items-center space-x-2 font-bold text-red-800">
-            <AlertTriangle className="w-4 h-4 text-red-600" />
+        <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-xs text-red-300 space-y-1.5">
+          <div className="flex items-center space-x-2 font-medium text-red-400">
+            <AlertTriangle className="w-4 h-4 text-red-400" strokeWidth={1.5} />
             <span>Could Not Generate Schedule</span>
           </div>
           <p>{error}</p>
         </div>
       )}
 
-      {/* GENERATED PLAN RESULT (Section 7 & 8) */}
+      {/* GENERATED PLAN RESULT */}
       {generatedPlan && (
-        <div className="bg-white rounded-2xl border-2 border-blue-500/50 p-6 shadow-md space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+        <div className="bg-zinc-900 rounded-lg border border-blue-500/40 p-6 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-zinc-800">
             <div>
-              <span className="text-[10px] font-black uppercase text-blue-600 tracking-wider">
-                Step 4 Recommendation Result
+              <span className="text-[10px] font-mono uppercase text-blue-400 tracking-wider">
+                Recommendation Result
               </span>
-              <h2 className="text-lg font-black text-slate-900 mt-0.5">
-                AI RECOMMENDED MAINTENANCE PLAN
+              <h2 className="text-base font-semibold text-zinc-100 mt-0.5 uppercase tracking-wide">
+                AI Recommended Maintenance Plan
               </h2>
-              <p className="text-xs text-slate-500">15 September 2026 • Section C2-02</p>
+              <p className="text-xs text-zinc-400">15 September 2026 &bull; Section C2-02</p>
             </div>
             <div className="flex items-center space-x-2">
-              <span className="text-xs font-bold px-3 py-1 bg-amber-50 text-amber-800 border border-amber-200 rounded-full uppercase">
+              <span className="text-xs font-mono font-medium px-2.5 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-md uppercase">
                 {generatedPlan.status}
               </span>
             </div>
           </div>
 
-          {/* Plan Summary Card (Section 7) */}
+          {/* Plan Summary Card */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2.5 text-xs">
+            <div className="p-4 bg-zinc-950/60 rounded-md border border-zinc-800 space-y-2 text-xs">
               <div className="flex justify-between">
-                <span className="text-slate-500 font-bold">Recommended Block:</span>
-                <span className="font-extrabold text-slate-900">14:00 – 16:30 (2.5 Hours)</span>
+                <span className="text-zinc-400 font-mono">Recommended Block:</span>
+                <span className="font-mono font-semibold text-zinc-100">14:00 – 16:30 (2.5 Hours)</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500 font-bold">Location:</span>
-                <span className="font-extrabold text-slate-900">Corridor C2 / Section C2-02</span>
+                <span className="text-zinc-400 font-mono">Location:</span>
+                <span className="font-medium text-zinc-200">Corridor C2 / Section C2-02</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500 font-bold">Maintenance Work:</span>
-                <span className="font-extrabold text-slate-900">Track repair, Signal test, Traction check</span>
+                <span className="text-zinc-400 font-mono">Maintenance Work:</span>
+                <span className="font-medium text-zinc-200">Track repair, Signal test, Traction check</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500 font-bold">Coordinated Teams:</span>
-                <span className="font-extrabold text-blue-700">Engineering, S&T, Traction</span>
+                <span className="text-zinc-400 font-mono">Coordinated Teams:</span>
+                <span className="font-medium text-blue-400">Engineering, S&amp;T, Traction</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500 font-bold">Expected Train Disruption:</span>
-                <span className="font-extrabold text-emerald-600">Low (15 min margin)</span>
+                <span className="text-zinc-400 font-mono">Expected Train Disruption:</span>
+                <span className="font-mono font-semibold text-emerald-400">Low (15 min margin)</span>
               </div>
             </div>
 
-            {/* Smart Multi-Department Combination Card (Section 8) */}
-            <div className="p-4 bg-gradient-to-br from-indigo-50 to-blue-50 rounded-xl border border-indigo-200 space-y-3 text-xs">
-              <div className="flex items-center space-x-2 text-indigo-900 font-black">
-                <Users className="w-4 h-4 text-indigo-600" />
-                <span>SMART COMBINATION</span>
+            {/* Smart Multi-Department Combination Card */}
+            <div className="p-4 bg-zinc-950/60 rounded-md border border-zinc-800 space-y-3 text-xs">
+              <div className="flex items-center space-x-2 text-blue-400 font-mono uppercase text-[11px]">
+                <Users className="w-4 h-4 text-blue-400" strokeWidth={1.5} />
+                <span>Smart Multi-Department Combination</span>
               </div>
-              <p className="text-indigo-950 font-medium leading-relaxed">
+              <p className="text-zinc-300 leading-relaxed">
                 3 maintenance activities require access to the same section. Instead of creating 3 separate blocks,
-                RailOpt-AI recommends <strong>one coordinated block</strong>.
+                RailOpt-AI recommends <strong className="text-zinc-100">one coordinated block</strong>.
               </p>
 
-              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-indigo-100 text-[11px]">
-                <div className="p-2 bg-white/80 rounded-lg border border-indigo-100">
-                  <div className="text-slate-500 font-bold">Separate Work:</div>
-                  <div className="text-slate-800 font-semibold mt-0.5">Eng 2h + S&T 1h + Traction 1h</div>
-                  <div className="text-red-600 font-extrabold mt-1">Total: 4.0 Hours</div>
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-zinc-800 text-[11px] font-mono">
+                <div className="p-2 bg-zinc-900 rounded border border-zinc-800">
+                  <div className="text-zinc-500">Separate Work:</div>
+                  <div className="text-zinc-300 font-normal mt-0.5">Eng 2h + S&amp;T 1h + Traction 1h</div>
+                  <div className="text-red-400 font-medium mt-1">Total: 4.0 Hours</div>
                 </div>
-                <div className="p-2 bg-white/80 rounded-lg border border-indigo-100">
-                  <div className="text-slate-500 font-bold">Coordinated Plan:</div>
-                  <div className="text-slate-800 font-semibold mt-0.5">Single shared possession</div>
-                  <div className="text-emerald-700 font-extrabold mt-1">Single Block: 2.5 Hours</div>
+                <div className="p-2 bg-zinc-900 rounded border border-zinc-800">
+                  <div className="text-zinc-500">Coordinated Plan:</div>
+                  <div className="text-zinc-300 font-normal mt-0.5">Single shared possession</div>
+                  <div className="text-emerald-400 font-medium mt-1">Single Block: 2.5 Hours</div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Action Buttons (Section 7) */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-slate-100">
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-zinc-800">
             <Link
               to={`/plans/${generatedPlan.plan_id}`}
-              className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl flex items-center justify-center space-x-2"
+              className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-100 font-medium text-xs rounded-md flex items-center justify-center space-x-2 transition-colors"
             >
-              <span>VIEW DETAILED PLAN & TASKS</span>
-              <ArrowRight className="w-4 h-4" />
+              <span>View Detailed Plan &amp; Tasks</span>
+              <ArrowRight className="w-3.5 h-3.5" strokeWidth={1.5} />
             </Link>
 
             <div className="flex items-center space-x-2 self-end">
               <Link
                 to={`/plans/${generatedPlan.plan_id}`}
-                className="px-4 py-2 border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-xl"
+                className="px-3.5 py-2 border border-zinc-700 hover:bg-zinc-800 text-zinc-200 font-medium text-xs rounded-md transition-colors"
               >
-                REQUEST CHANGES
+                Request Changes
               </Link>
               <Link
                 to={`/plans/${generatedPlan.plan_id}`}
-                className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl"
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs rounded-md transition-colors shadow-sm"
               >
-                {role === 'OPERATIONS_MANAGER' ? 'APPROVE PLAN' : 'SUBMIT FOR APPROVAL'}
+                {role === 'OPERATIONS_MANAGER' ? 'Approve Plan' : 'Submit for Approval'}
               </Link>
             </div>
           </div>
         </div>
       )}
 
-      {/* AVAILABLE WORK WINDOWS (Section 5) */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+      {/* AVAILABLE WORK WINDOWS */}
+      <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-5 space-y-4">
+        <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
           <div>
-            <span className="text-[10px] font-extrabold uppercase text-slate-400">Step 3 Analysis</span>
-            <h3 className="text-base font-black text-slate-900 uppercase">AVAILABLE MAINTENANCE WINDOWS TODAY</h3>
-            <p className="text-xs text-slate-500">
-              Evaluated against passenger train timetables, freight movements, and safety headway margins.
+            <span className="text-[10px] font-mono uppercase text-zinc-500">Constraint Evaluation</span>
+            <h3 className="text-xs font-mono uppercase tracking-wider text-zinc-200">Available Maintenance Windows Today</h3>
+            <p className="text-xs text-zinc-400 mt-0.5">
+              Evaluated against passenger train timetables, freight movements, and safety headway margins
             </p>
           </div>
-          <span className="text-xs font-bold text-slate-500">Corridor C2 • Today</span>
+          <span className="text-xs font-mono text-zinc-400">Corridor C2 &bull; Today</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
           {windows.map((w) => (
             <div
               key={w.block_id}
-              className={`p-4 rounded-xl border flex flex-col justify-between transition-all ${
+              className={`p-4 rounded-md border flex flex-col justify-between transition-colors ${
                 w.is_recommended
-                  ? 'bg-blue-50/70 border-blue-300 ring-2 ring-blue-500/20 shadow-xs'
-                  : 'bg-slate-50 border-slate-200'
+                  ? 'bg-blue-500/10 border-blue-500/40 text-zinc-100'
+                  : 'bg-zinc-950/60 border-zinc-800 text-zinc-300'
               }`}
             >
               <div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-black text-slate-900">{w.time_range}</span>
+                  <span className="text-xs font-mono font-semibold text-zinc-100">{w.time_range}</span>
                   <span
-                    className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
+                    className={`text-[9px] font-mono font-medium px-1.5 py-0.5 rounded ${
                       w.traffic_rating === 'RECOMMENDED'
-                        ? 'bg-emerald-100 text-emerald-800'
+                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                         : w.traffic_rating === 'SUITABLE'
-                        ? 'bg-blue-100 text-blue-800'
-                        : 'bg-amber-100 text-amber-800'
+                        ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                        : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
                     }`}
                   >
                     {w.traffic_badge}
                   </span>
                 </div>
-                <div className="text-[11px] text-slate-500 mt-1 font-medium">Duration: {w.duration_minutes} minutes</div>
-                <p className="text-xs text-slate-600 mt-2 leading-relaxed">{w.explanation}</p>
+                <div className="text-[11px] text-zinc-500 mt-1 font-mono">Duration: {w.duration_minutes} minutes</div>
+                <p className="text-xs text-zinc-400 mt-2 leading-relaxed">{w.explanation}</p>
               </div>
 
               {w.is_recommended && (
-                <div className="mt-3 pt-2 border-t border-blue-200/60 text-[10px] font-extrabold text-blue-700 uppercase">
+                <div className="mt-3 pt-2 border-t border-blue-500/20 text-[10px] font-mono text-blue-400 uppercase">
                   AI Preferred Possession Slot
                 </div>
               )}
@@ -327,38 +310,38 @@ export const PlanGenerationWorkflow: React.FC = () => {
       </div>
 
       {/* EXISTING RECENT PLANS */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-          <h3 className="text-sm font-black text-slate-900 uppercase">Existing Corridor Maintenance Plans</h3>
-          <Link to="/planner/compare" className="text-xs font-bold text-blue-600 hover:underline">
-            Compare Baseline vs AI →
+      <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-5 space-y-4">
+        <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
+          <h3 className="text-xs font-mono uppercase tracking-wider text-zinc-200">Existing Corridor Maintenance Plans</h3>
+          <Link to="/planner/compare" className="text-xs font-medium text-blue-400 hover:text-blue-300">
+            Compare Baseline vs AI &rarr;
           </Link>
         </div>
 
-        <div className="divide-y divide-slate-100">
+        <div className="divide-y divide-zinc-800/80">
           {existingPlans.map((p) => (
             <div key={p.plan_id} className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <div className="flex items-center space-x-2">
-                  <span className="font-extrabold text-xs text-slate-900">
+                  <span className="font-semibold text-xs text-zinc-100">
                     Plan #{p.plan_id}: {p.plan_name}
                   </span>
-                  <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded uppercase ${
-                    p.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'
+                  <span className={`text-[10px] font-mono px-2 py-0.5 rounded uppercase ${
+                    p.status === 'APPROVED' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
                   }`}>
                     {p.status}
                   </span>
                 </div>
-                <div className="text-[11px] text-slate-500 mt-0.5">
-                  Tasks: {p.tasks_count} • Train delay: {p.train_impact_minutes || 15}m • Asset avail: {p.asset_availability || 97}%
+                <div className="text-[11px] text-zinc-400 mt-0.5 font-mono">
+                  Tasks: {p.tasks_count} &bull; Train delay: {p.train_impact_minutes || 15}m &bull; Asset avail: {p.asset_availability || 97}%
                 </div>
               </div>
 
               <Link
                 to={`/plans/${p.plan_id}`}
-                className="px-3.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs self-end sm:self-center"
+                className="px-3 py-1.5 rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-medium self-end sm:self-center transition-colors"
               >
-                View Plan →
+                View Plan &rarr;
               </Link>
             </div>
           ))}
@@ -367,4 +350,5 @@ export const PlanGenerationWorkflow: React.FC = () => {
     </div>
   )
 }
+
 export default PlanGenerationWorkflow

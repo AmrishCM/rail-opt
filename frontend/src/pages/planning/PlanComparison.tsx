@@ -24,7 +24,12 @@ export const PlanComparison: React.FC = () => {
   }, [])
 
   if (loading) {
-    return <div className="p-8 text-center text-xs text-slate-500">Calculating schedule comparison...</div>
+    return (
+      <div className="p-12 text-center text-xs text-zinc-400">
+        <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+        Calculating schedule comparison...
+      </div>
+    )
   }
 
   const b = comparison?.baseline || {
@@ -46,112 +51,113 @@ export const PlanComparison: React.FC = () => {
   }
 
   return (
-    <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-6">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex items-center space-x-3 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+      <div className="flex items-center space-x-3 bg-zinc-900 p-5 rounded-lg border border-zinc-800">
         <Link
           to="/planner"
-          className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600"
+          className="w-8 h-8 rounded-md bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center text-zinc-300 transition-colors"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
         </Link>
         <div>
           <div className="flex items-center space-x-2">
-            <h1 className="text-xl font-black text-slate-900 tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-semibold text-zinc-100 tracking-tight">
               Baseline Schedule vs RailOpt-AI Coordinated Plan
             </h1>
-            <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
-              ACTUAL SIMULATION ESTIMATE
+            <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase">
+              Simulation Estimate
             </span>
           </div>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Mathematical comparison of traditional uncoordinated block allocation versus multi-department optimization.
+          <p className="text-xs text-zinc-400 mt-1">
+            Mathematical comparison of traditional uncoordinated block allocation versus multi-department optimization
           </p>
         </div>
       </div>
 
-      {/* Side-by-side Table (Section 55) */}
+      {/* Side-by-side Table */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* BASELINE CARD */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-5">
-          <div className="border-b border-slate-100 pb-3">
-            <span className="text-[10px] font-bold uppercase text-slate-400">Standard Operational Method</span>
-            <h2 className="text-lg font-black text-slate-800">{b.name}</h2>
-            <p className="text-xs text-slate-500 mt-0.5">Separate block requested by each department</p>
+        <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-6 space-y-5">
+          <div className="border-b border-zinc-800 pb-3">
+            <span className="text-[10px] font-mono uppercase text-zinc-500">Standard Operational Method</span>
+            <h2 className="text-base font-semibold text-zinc-200 mt-0.5">{b.name}</h2>
+            <p className="text-xs text-zinc-400 mt-0.5">Separate block requested by each department</p>
           </div>
 
-          <div className="space-y-3.5 text-xs">
-            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex justify-between items-center">
-              <span className="text-slate-500 font-bold">Total Corridor Block Hours:</span>
-              <span className="text-sm font-black text-slate-900">{b.block_hours}</span>
+          <div className="space-y-3 text-xs">
+            <div className="p-3 bg-zinc-950/60 rounded-md border border-zinc-800 flex justify-between items-center">
+              <span className="text-zinc-400 font-mono">Total Corridor Block Hours:</span>
+              <span className="font-mono font-semibold text-zinc-100">{b.block_hours}</span>
             </div>
 
-            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex justify-between items-center">
-              <span className="text-slate-500 font-bold">Passenger Train Delay Impact:</span>
-              <span className="text-sm font-black text-red-700">{b.train_impact}</span>
+            <div className="p-3 bg-zinc-950/60 rounded-md border border-zinc-800 flex justify-between items-center">
+              <span className="text-zinc-400 font-mono">Passenger Train Delay Impact:</span>
+              <span className="font-mono font-semibold text-red-400">{b.train_impact}</span>
             </div>
 
-            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex justify-between items-center">
-              <span className="text-slate-500 font-bold">Critical Safety Tasks Done:</span>
-              <span className="text-sm font-black text-slate-900">{b.critical_work_done}</span>
+            <div className="p-3 bg-zinc-950/60 rounded-md border border-zinc-800 flex justify-between items-center">
+              <span className="text-zinc-400 font-mono">Critical Safety Tasks Done:</span>
+              <span className="font-mono font-semibold text-zinc-100">{b.critical_work_done}</span>
             </div>
 
-            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex justify-between items-center">
-              <span className="text-slate-500 font-bold">Department Coordination:</span>
-              <span className="text-xs font-bold text-slate-700">{b.coordination}</span>
+            <div className="p-3 bg-zinc-950/60 rounded-md border border-zinc-800 flex justify-between items-center">
+              <span className="text-zinc-400 font-mono">Department Coordination:</span>
+              <span className="text-xs text-zinc-300">{b.coordination}</span>
             </div>
 
-            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex justify-between items-center">
-              <span className="text-slate-500 font-bold">Corridor Asset Availability:</span>
-              <span className="text-sm font-black text-slate-800">{b.asset_availability}</span>
+            <div className="p-3 bg-zinc-950/60 rounded-md border border-zinc-800 flex justify-between items-center">
+              <span className="text-zinc-400 font-mono">Corridor Asset Availability:</span>
+              <span className="font-mono font-semibold text-zinc-200">{b.asset_availability}</span>
             </div>
           </div>
         </div>
 
         {/* RAILOPT-AI CARD */}
-        <div className="bg-gradient-to-br from-blue-50/50 to-indigo-50/40 rounded-2xl border-2 border-blue-500/60 p-6 shadow-md space-y-5">
-          <div className="border-b border-blue-200/60 pb-3">
-            <span className="text-[10px] font-black uppercase text-blue-700 tracking-wider">CP-SAT Optimized Schedule</span>
-            <h2 className="text-lg font-black text-blue-950">{ai.name}</h2>
-            <p className="text-xs text-blue-800 mt-0.5">Automated multi-department joint possession</p>
+        <div className="bg-zinc-900 rounded-lg border border-blue-500/40 p-6 space-y-5">
+          <div className="border-b border-zinc-800 pb-3">
+            <span className="text-[10px] font-mono uppercase text-blue-400 tracking-wider">CP-SAT Optimized Schedule</span>
+            <h2 className="text-base font-semibold text-zinc-100 mt-0.5">{ai.name}</h2>
+            <p className="text-xs text-zinc-400 mt-0.5">Automated multi-department joint possession</p>
           </div>
 
-          <div className="space-y-3.5 text-xs">
-            <div className="p-3 bg-white rounded-xl border border-blue-200 shadow-2xs flex justify-between items-center">
-              <span className="text-slate-600 font-bold">Total Corridor Block Hours:</span>
-              <span className="text-sm font-black text-emerald-600">{ai.block_hours}</span>
+          <div className="space-y-3 text-xs">
+            <div className="p-3 bg-zinc-950/60 rounded-md border border-zinc-800 flex justify-between items-center">
+              <span className="text-zinc-400 font-mono">Total Corridor Block Hours:</span>
+              <span className="font-mono font-semibold text-emerald-400">{ai.block_hours}</span>
             </div>
 
-            <div className="p-3 bg-white rounded-xl border border-blue-200 shadow-2xs flex justify-between items-center">
-              <span className="text-slate-600 font-bold">Passenger Train Delay Impact:</span>
-              <span className="text-sm font-black text-emerald-600">{ai.train_impact}</span>
+            <div className="p-3 bg-zinc-950/60 rounded-md border border-zinc-800 flex justify-between items-center">
+              <span className="text-zinc-400 font-mono">Passenger Train Delay Impact:</span>
+              <span className="font-mono font-semibold text-emerald-400">{ai.train_impact}</span>
             </div>
 
-            <div className="p-3 bg-white rounded-xl border border-blue-200 shadow-2xs flex justify-between items-center">
-              <span className="text-slate-600 font-bold">Critical Safety Tasks Done:</span>
-              <span className="text-sm font-black text-blue-900">{ai.critical_work_done}</span>
+            <div className="p-3 bg-zinc-950/60 rounded-md border border-zinc-800 flex justify-between items-center">
+              <span className="text-zinc-400 font-mono">Critical Safety Tasks Done:</span>
+              <span className="font-mono font-semibold text-blue-400">{ai.critical_work_done}</span>
             </div>
 
-            <div className="p-3 bg-white rounded-xl border border-blue-200 shadow-2xs flex justify-between items-center">
-              <span className="text-slate-600 font-bold">Department Coordination:</span>
-              <span className="text-xs font-black text-indigo-700">{ai.coordination}</span>
+            <div className="p-3 bg-zinc-950/60 rounded-md border border-zinc-800 flex justify-between items-center">
+              <span className="text-zinc-400 font-mono">Department Coordination:</span>
+              <span className="text-xs font-medium text-blue-300">{ai.coordination}</span>
             </div>
 
-            <div className="p-3 bg-white rounded-xl border border-blue-200 shadow-2xs flex justify-between items-center">
-              <span className="text-slate-600 font-bold">Corridor Asset Availability:</span>
-              <span className="text-sm font-black text-emerald-600">{ai.asset_availability}</span>
+            <div className="p-3 bg-zinc-950/60 rounded-md border border-zinc-800 flex justify-between items-center">
+              <span className="text-zinc-400 font-mono">Corridor Asset Availability:</span>
+              <span className="font-mono font-semibold text-emerald-400">{ai.asset_availability}</span>
             </div>
           </div>
         </div>
       </div>
 
       {/* Summary Explanation */}
-      <div className="p-5 bg-white rounded-2xl border border-slate-200 text-xs text-slate-700 leading-relaxed shadow-2xs">
-        <strong className="text-slate-900">Engineering Rationale:</strong>{' '}
+      <div className="p-5 bg-zinc-900 rounded-lg border border-zinc-800 text-xs text-zinc-300 leading-relaxed">
+        <strong className="text-zinc-100 font-semibold">Engineering Rationale:</strong>{' '}
         {comparison?.summary ||
           'Coordinating Engineering, S&T, and Traction into a single 2.5-hour possession eliminates 2 separate corridor shutdowns and reduces train delay by 76%.'}
       </div>
     </div>
   )
 }
+
 export default PlanComparison

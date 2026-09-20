@@ -67,7 +67,7 @@ export const MobileBottomNav: React.FC = () => {
 
   return (
     <nav
-      className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 shadow-lg px-2 pb-[env(safe-area-inset-bottom)]"
+      className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-zinc-950/95 backdrop-blur-md border-t border-zinc-800 shadow-lg px-2 pb-[env(safe-area-inset-bottom)]"
       role="navigation"
       aria-label="Mobile Navigation Bar"
     >
@@ -82,16 +82,16 @@ export const MobileBottomNav: React.FC = () => {
                 `flex flex-col items-center justify-center min-w-[56px] min-h-[48px] px-1 py-1 rounded-xl transition-all ${
                   item.isPrimary
                     ? isActive
-                      ? 'text-blue-600 font-extrabold scale-105'
-                      : 'text-blue-600 font-bold'
+                      ? 'text-blue-400 font-medium scale-105'
+                      : 'text-blue-400 font-medium'
                     : isActive
-                    ? 'text-blue-600 font-bold bg-blue-50/80'
-                    : 'text-slate-500 hover:text-slate-900 active:text-blue-600 font-medium'
+                    ? 'text-blue-400 font-medium bg-blue-500/10'
+                    : 'text-zinc-500 hover:text-zinc-200 active:text-blue-400 font-normal'
                 }`
               }
             >
               {item.isPrimary ? (
-                <div className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-md mb-0.5 -mt-3 ring-4 ring-white">
+                <div className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-md mb-0.5 -mt-3 ring-4 ring-zinc-950">
                   <Icon className="w-5 h-5" />
                 </div>
               ) : (

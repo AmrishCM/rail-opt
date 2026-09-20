@@ -7,7 +7,6 @@ interface MetricRow {
   aiPlan: string | number
   diff: string
   positive: boolean
-  unit?: string
   icon: React.ReactNode
 }
 
@@ -31,7 +30,7 @@ export const PlanComparisonTable: React.FC<PlanComparisonTableProps> = ({ compar
       aiPlan: a.asset_availability ? `${a.asset_availability}%` : '96.4%',
       diff: imp.availability_gain_percent || '+5.2%',
       positive: true,
-      icon: <ShieldCheck className="w-4 h-4 text-emerald-600" />
+      icon: <ShieldCheck className="w-4 h-4 text-emerald-400" />
     },
     {
       label: 'Total Possession Block Hours',
@@ -39,7 +38,7 @@ export const PlanComparisonTable: React.FC<PlanComparisonTableProps> = ({ compar
       aiPlan: a.total_block_hours ? `${a.total_block_hours} h` : '6.1 h',
       diff: imp.block_hours_saved || '-2.6 h',
       positive: true,
-      icon: <Clock className="w-4 h-4 text-blue-600" />
+      icon: <Clock className="w-4 h-4 text-blue-400" />
     },
     {
       label: 'Simulated Train Delay Disruption',
@@ -47,7 +46,7 @@ export const PlanComparisonTable: React.FC<PlanComparisonTableProps> = ({ compar
       aiPlan: a.train_delay_minutes ? `${a.train_delay_minutes} min` : '38 min',
       diff: imp.train_delay_reduction_minutes || '-34 min',
       positive: true,
-      icon: <Zap className="w-4 h-4 text-amber-600" />
+      icon: <Zap className="w-4 h-4 text-amber-400" />
     },
     {
       label: 'Completed Maintenance Tasks',
@@ -55,7 +54,7 @@ export const PlanComparisonTable: React.FC<PlanComparisonTableProps> = ({ compar
       aiPlan: a.tasks_completed ? a.tasks_completed : 24,
       diff: imp.extra_tasks_completed || '+6 tasks',
       positive: true,
-      icon: <CheckCircle2 className="w-4 h-4 text-indigo-600" />
+      icon: <CheckCircle2 className="w-4 h-4 text-indigo-400" />
     },
     {
       label: 'Train Timetable Conflicts',
@@ -63,7 +62,7 @@ export const PlanComparisonTable: React.FC<PlanComparisonTableProps> = ({ compar
       aiPlan: a.conflicts !== undefined ? a.conflicts : 0,
       diff: imp.conflicts_resolved || '-5 (Zero)',
       positive: true,
-      icon: <AlertTriangle className="w-4 h-4 text-rose-600" />
+      icon: <AlertTriangle className="w-4 h-4 text-rose-400" />
     },
     {
       label: 'Average Block Utilization',
@@ -71,52 +70,48 @@ export const PlanComparisonTable: React.FC<PlanComparisonTableProps> = ({ compar
       aiPlan: a.average_block_utilization ? `${a.average_block_utilization}%` : '87.4%',
       diff: imp.utilization_improvement || '+24.4%',
       positive: true,
-      icon: <Layers className="w-4 h-4 text-purple-600" />
+      icon: <Layers className="w-4 h-4 text-purple-400" />
     }
   ]
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-      <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-slate-50/50">
+    <div className="bg-zinc-900 rounded-lg border border-zinc-800 overflow-hidden">
+      <div className="p-4 border-b border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-zinc-950/40">
         <div>
-          <h3 className="font-bold text-slate-900 text-sm">Baseline Greedy Plan vs RailOpt-AI Plan</h3>
-          <p className="text-xs text-slate-500">
+          <h3 className="font-medium text-zinc-100 text-sm">Baseline Greedy Plan vs RailOpt-AI Plan</h3>
+          <p className="text-xs text-zinc-500">
             Independent discrete-event simulation performance comparison (Synthetic/Demo data)
           </p>
         </div>
-        <span className="text-[11px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded">
+        <span className="text-[11px] font-mono text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2.5 py-1 rounded whitespace-nowrap">
           Validated by Simulation Engine
         </span>
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full text-left text-xs border-collapse">
+        <table className="w-full text-left text-xs border-collapse font-mono">
           <thead>
-            <tr className="border-b border-slate-200 bg-slate-100/70 text-slate-600 font-bold uppercase tracking-wider text-[10px]">
+            <tr className="border-b border-zinc-800 bg-zinc-950/60 text-zinc-500 uppercase tracking-wider text-[10px]">
               <th className="py-3 px-4">Performance Metric</th>
-              <th className="py-3 px-4 text-slate-500">Manual / Baseline Plan</th>
-              <th className="py-3 px-4 text-slate-900 bg-blue-50/60 font-extrabold">RailOpt-AI (CP-SAT)</th>
-              <th className="py-3 px-4">Operational Improvement</th>
+              <th className="py-3 px-4">Manual / Baseline Plan</th>
+              <th className="py-3 px-4 text-blue-400 bg-blue-500/5">RailOpt-AI (CP-SAT)</th>
+              <th className="py-3 px-4">Improvement</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-zinc-800">
             {rows.map((row, idx) => (
-              <tr key={idx} className="hover:bg-slate-50 transition-colors">
-                <td className="py-3 px-4 font-semibold text-slate-800 flex items-center space-x-2">
+              <tr key={idx} className="hover:bg-zinc-800/30 transition-colors">
+                <td className="py-3 px-4 text-zinc-300 flex items-center space-x-2">
                   <span>{row.icon}</span>
                   <span>{row.label}</span>
                 </td>
-                <td className="py-3 px-4 text-slate-500 font-medium">
-                  {row.baseline}
-                </td>
-                <td className="py-3 px-4 font-bold text-blue-900 bg-blue-50/30">
-                  {row.aiPlan}
-                </td>
+                <td className="py-3 px-4 text-zinc-500">{row.baseline}</td>
+                <td className="py-3 px-4 text-blue-300 bg-blue-500/5">{row.aiPlan}</td>
                 <td className="py-3 px-4">
-                  <span className={`inline-flex items-center space-x-1 font-extrabold px-2.5 py-0.5 rounded-full text-[11px] ${
+                  <span className={`inline-flex items-center space-x-1 font-medium px-2.5 py-0.5 rounded text-[11px] ${
                     row.positive
-                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                      : 'bg-rose-50 text-rose-700 border border-rose-200'
+                      ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                      : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
                   }`}>
                     {row.positive ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
                     <span>{row.diff}</span>
@@ -128,9 +123,9 @@ export const PlanComparisonTable: React.FC<PlanComparisonTableProps> = ({ compar
         </table>
       </div>
 
-      <div className="p-3 bg-slate-50 border-t border-slate-100 text-[11px] text-slate-500 flex items-center justify-between">
+      <div className="p-3 bg-zinc-950/40 border-t border-zinc-800 text-[11px] text-zinc-500 font-mono flex items-center justify-between">
         <span>* Metrics produced by deterministic discrete-event simulator on synthetic corridor dataset.</span>
-        <span className="font-semibold text-slate-700">Reproducible random seed: 42</span>
+        <span className="text-zinc-400">Reproducible random seed: 42</span>
       </div>
     </div>
   )

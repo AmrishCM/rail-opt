@@ -1,8 +1,16 @@
 import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  Brain, CheckCircle2, AlertTriangle, ShieldCheck, Clock,
-  ArrowRight, FileText, ChevronRight, Zap, RefreshCw, XCircle, Info
+  Brain,
+  CheckCircle2,
+  AlertTriangle,
+  ShieldCheck,
+  Clock,
+  ArrowRight,
+  FileText,
+  RefreshCw,
+  XCircle,
+  Info
 } from 'lucide-react'
 import { fetchMaintenanceTasks, approvePlan, rejectPlan, apiClient } from '../../services/api'
 import { OperationalGanttTimeline } from '../../components/timeline/OperationalGanttTimeline'
@@ -31,7 +39,6 @@ export const ManagerAIPlanner: React.FC = () => {
         const res = await apiClient.get('/planning/candidates')
         return res.data
       } catch (e) {
-        // Return structured default candidate comparison
         return {
           plan_id: 42,
           plan_number: 'PLAN-2026-00042',
@@ -115,16 +122,16 @@ export const ManagerAIPlanner: React.FC = () => {
   return (
     <div className="space-y-4">
       {/* 1. Header Banner */}
-      <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+      <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div>
           <div className="flex items-center space-x-2">
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">AI Maintenance Planner</h1>
-            <span className="px-2 py-0.5 rounded bg-rail-maroon text-white font-bold text-[10px] uppercase tracking-wider">
+            <h1 className="text-xl font-semibold text-zinc-100 tracking-tight">AI Maintenance Planner</h1>
+            <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 font-mono text-[10px] uppercase tracking-wider">
               Operations Control
             </span>
           </div>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Optimize maintenance block schedules, analyze train timetable conflicts, and publish authorized possessions.
+          <p className="text-xs text-zinc-400 mt-0.5">
+            Optimize maintenance block schedules, analyze train timetable conflicts, and publish authorized possessions
           </p>
         </div>
 
@@ -132,50 +139,50 @@ export const ManagerAIPlanner: React.FC = () => {
           <button
             type="button"
             onClick={() => refetchCandidates()}
-            className="flex items-center space-x-1.5 px-3 py-1.5 border border-slate-300 rounded text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+            className="flex items-center space-x-1.5 px-3 py-1.5 border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 rounded-md text-xs font-medium text-zinc-200 transition-colors"
           >
-            <RefreshCw className="w-3.5 h-3.5" />
+            <RefreshCw className="w-3.5 h-3.5 text-zinc-400" strokeWidth={1.5} />
             <span>Re-evaluate Schedule</span>
           </button>
           <button
             type="button"
             onClick={() => setApprovalModalOpen(true)}
-            className="flex items-center space-x-1.5 px-3.5 py-1.5 bg-rail-maroon hover:bg-rail-maroon-dark text-white rounded text-xs font-bold transition-colors shadow-xs"
+            className="flex items-center space-x-1.5 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-md text-xs font-medium transition-colors shadow-sm"
           >
-            <CheckCircle2 className="w-4 h-4" />
-            <span>Approve & Publish Plan</span>
+            <CheckCircle2 className="w-4 h-4" strokeWidth={1.5} />
+            <span>Approve &amp; Publish Plan</span>
           </button>
         </div>
       </div>
 
       {/* Success Notification Alert */}
       {publishSuccessMsg && (
-        <div className="p-3 bg-emerald-50 border border-emerald-300 rounded-lg flex items-center justify-between text-xs text-emerald-900 shadow-2xs">
+        <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg flex items-center justify-between text-xs text-emerald-300">
           <div className="flex items-center space-x-2 font-medium">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" strokeWidth={1.5} />
             <span>{publishSuccessMsg}</span>
           </div>
-          <button type="button" onClick={() => setPublishSuccessMsg(null)} className="text-emerald-700 hover:text-emerald-900 font-bold">
+          <button type="button" onClick={() => setPublishSuccessMsg(null)} className="text-emerald-400 hover:text-emerald-300 font-medium">
             Dismiss
           </button>
         </div>
       )}
 
-      {/* 2. Main 3-Column Workspace (Part 33) */}
+      {/* 2. Main 3-Column Workspace */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         {/* Left Column (3 cols): Maintenance Tasks with Explainable Priority */}
         <div className="lg:col-span-3 space-y-3">
-          <div className="bg-white border border-slate-200 rounded-lg shadow-2xs overflow-hidden">
-            <div className="px-3.5 py-2.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-              <span className="font-bold text-xs text-slate-800 uppercase tracking-wider">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden">
+            <div className="px-3.5 py-2.5 bg-zinc-900 border-b border-zinc-800 flex items-center justify-between">
+              <span className="font-mono text-xs text-zinc-300 uppercase tracking-wider">
                 Maintenance Tasks ({tasks.length || 3})
               </span>
-              <span className="text-[10px] text-slate-500 font-medium">AI Prioritized</span>
+              <span className="text-[10px] text-zinc-400 font-mono">AI Prioritized</span>
             </div>
 
-            <div className="divide-y divide-slate-100 max-h-[640px] overflow-y-auto">
+            <div className="divide-y divide-zinc-800/80 max-h-[640px] overflow-y-auto">
               {tasks.length === 0 ? (
-                <div className="p-4 text-center text-xs text-slate-500">No active maintenance tasks.</div>
+                <div className="p-4 text-center text-xs text-zinc-400">No active maintenance tasks.</div>
               ) : (
                 tasks.slice(0, 5).map((t: any, idx: number) => {
                   const refNo = t.reference_no || `WO-102${idx + 4}`
@@ -190,26 +197,26 @@ export const ManagerAIPlanner: React.FC = () => {
                     <div
                       key={t.task_id || idx}
                       onClick={() => setSelectedTaskDetail({ ...t, refNo, pLevel, reasons })}
-                      className="p-3 hover:bg-slate-50/80 cursor-pointer transition-colors space-y-1.5"
+                      className="p-3 hover:bg-zinc-800/50 cursor-pointer transition-colors space-y-1.5"
                     >
                       <div className="flex items-center justify-between">
-                        <span className="font-mono font-bold text-xs text-slate-900">{refNo}</span>
+                        <span className="font-mono font-medium text-xs text-blue-400">{refNo}</span>
                         <PriorityBadge level={pLevel} />
                       </div>
 
-                      <p className="text-xs font-semibold text-slate-800 line-clamp-1">
+                      <p className="text-xs font-medium text-zinc-200 line-clamp-1">
                         {t.description || 'Ultrasonic weld test and rail surface grinding'}
                       </p>
 
-                      <div className="flex items-center justify-between text-[11px] text-slate-500">
+                      <div className="flex items-center justify-between text-[11px] text-zinc-400">
                         <span>{t.department || 'Engineering/Track'}</span>
                         <span className="font-mono">{t.estimated_duration || 45}m window</span>
                       </div>
 
                       {/* Explainable reasons bullet preview */}
-                      <div className="text-[10px] text-slate-600 bg-slate-50 p-1.5 rounded border border-slate-200/80 space-y-0.5">
-                        <span className="font-bold text-slate-700 block">Why Priority:</span>
-                        <p className="truncate">• {reasons[0]}</p>
+                      <div className="text-[10px] text-zinc-400 bg-zinc-950/60 p-1.5 rounded-md border border-zinc-800 space-y-0.5">
+                        <span className="font-mono text-zinc-300 block">Why Priority:</span>
+                        <p className="truncate">&bull; {reasons[0]}</p>
                       </div>
                     </div>
                   )
@@ -230,13 +237,13 @@ export const ManagerAIPlanner: React.FC = () => {
 
         {/* Right Column (3 cols): AI Planning Summary & Alternatives */}
         <div className="lg:col-span-3 space-y-3">
-          <div className="bg-white border border-slate-200 rounded-lg shadow-2xs overflow-hidden">
-            <div className="px-3.5 py-2.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden">
+            <div className="px-3.5 py-2.5 bg-zinc-900 border-b border-zinc-800 flex items-center justify-between">
               <div className="flex items-center space-x-1.5">
-                <Brain className="w-4 h-4 text-rail-maroon" />
-                <span className="font-bold text-xs text-slate-800 uppercase tracking-wider">AI Planning Summary</span>
+                <Brain className="w-4 h-4 text-blue-400" strokeWidth={1.5} />
+                <span className="font-mono text-xs text-zinc-300 uppercase tracking-wider">AI Planning Summary</span>
               </div>
-              <span className="text-[10px] font-bold text-rail-maroon bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">
+              <span className="text-[10px] font-mono text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded border border-blue-500/20">
                 OR-Tools CP-SAT
               </span>
             </div>
@@ -244,7 +251,7 @@ export const ManagerAIPlanner: React.FC = () => {
             <div className="p-3.5 space-y-3.5 text-xs">
               {/* Candidate Plan Selector (Plan A vs Plan B) */}
               <div>
-                <label className="block text-slate-600 font-bold mb-1.5 text-[11px] uppercase tracking-wider">
+                <label className="block text-zinc-400 font-mono mb-1.5 text-[10px] uppercase tracking-wider">
                   Feasible Plan Options:
                 </label>
                 <div className="space-y-2">
@@ -252,24 +259,24 @@ export const ManagerAIPlanner: React.FC = () => {
                     <div
                       key={cand.id}
                       onClick={() => setSelectedCandidate(cand.id)}
-                      className={`p-2.5 rounded-lg border cursor-pointer transition-all ${
+                      className={`p-2.5 rounded-md border cursor-pointer transition-colors ${
                         selectedCandidate === cand.id
-                          ? 'border-rail-maroon bg-rose-50/40 ring-1 ring-rail-maroon shadow-2xs'
-                          : 'border-slate-200 hover:border-slate-300 bg-white'
+                          ? 'border-blue-500 bg-blue-500/10 text-zinc-100'
+                          : 'border-zinc-800 hover:border-zinc-700 bg-zinc-950/40 text-zinc-300'
                       }`}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="font-bold text-xs text-slate-900">{cand.name}</span>
+                        <span className="font-medium text-xs text-zinc-100">{cand.name}</span>
                         {cand.is_recommended && (
-                          <span className="text-[9px] font-bold uppercase bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded">
+                          <span className="text-[9px] font-mono font-medium uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-1.5 py-0.5 rounded">
                             Recommended
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center justify-between text-[11px] text-slate-600 mt-1 font-mono">
+                      <div className="flex items-center justify-between text-[11px] text-zinc-400 mt-1 font-mono">
                         <span>Window: {cand.slot}</span>
-                        <span className={cand.train_conflicts === 0 ? 'text-emerald-700 font-bold' : 'text-amber-700 font-bold'}>
-                          {cand.train_conflicts} train conflict{cand.train_conflicts !== 1 ? 's' : ''}
+                        <span className={cand.train_conflicts === 0 ? 'text-emerald-400 font-medium' : 'text-amber-400 font-medium'}>
+                          {cand.train_conflicts} conflict{cand.train_conflicts !== 1 ? 's' : ''}
                         </span>
                       </div>
                     </div>
@@ -279,32 +286,32 @@ export const ManagerAIPlanner: React.FC = () => {
 
               {/* Comparative Metrics */}
               {currentPlan && (
-                <div className="space-y-2 pt-2 border-t border-slate-200">
+                <div className="space-y-2 pt-2 border-t border-zinc-800">
                   <div className="grid grid-cols-2 gap-2 text-[11px]">
-                    <div className="bg-slate-50 p-2 rounded border border-slate-200">
-                      <span className="text-slate-500 block">Train Delay:</span>
-                      <span className="font-bold text-slate-900 font-mono text-xs">
+                    <div className="bg-zinc-950/60 p-2 rounded-md border border-zinc-800">
+                      <span className="text-zinc-500 block font-mono text-[10px]">Train Delay:</span>
+                      <span className="font-medium text-zinc-100 font-mono text-xs">
                         {currentPlan.train_impact_minutes || 0} min
                       </span>
                     </div>
-                    <div className="bg-slate-50 p-2 rounded border border-slate-200">
-                      <span className="text-slate-500 block">Corridor Avail:</span>
-                      <span className="font-bold text-emerald-700 font-mono text-xs">
+                    <div className="bg-zinc-950/60 p-2 rounded-md border border-zinc-800">
+                      <span className="text-zinc-500 block font-mono text-[10px]">Corridor Avail:</span>
+                      <span className="font-medium text-emerald-400 font-mono text-xs">
                         {currentPlan.asset_availability || 98.4}%
                       </span>
                     </div>
                   </div>
 
-                  {/* Explainable Reasons ("Why this plan?") */}
-                  <div className="bg-slate-50 p-2.5 rounded border border-slate-200 space-y-1.5">
-                    <span className="font-bold text-slate-800 text-[11px] flex items-center space-x-1">
-                      <Info className="w-3.5 h-3.5 text-rail-maroon" />
+                  {/* Explainable Reasons */}
+                  <div className="bg-zinc-950/60 p-2.5 rounded-md border border-zinc-800 space-y-1.5">
+                    <span className="font-mono text-zinc-300 text-[10px] uppercase flex items-center space-x-1">
+                      <Info className="w-3.5 h-3.5 text-blue-400" strokeWidth={1.5} />
                       <span>Why this plan?</span>
                     </span>
-                    <ul className="space-y-1 text-[11px] text-slate-700">
+                    <ul className="space-y-1 text-[11px] text-zinc-400">
                       {currentPlan.reasons?.map((r: string, idx: number) => (
                         <li key={idx} className="flex items-start space-x-1.5">
-                          <span className="text-emerald-600 font-bold">✓</span>
+                          <span className="text-emerald-400 font-bold">&bull;</span>
                           <span>{r}</span>
                         </li>
                       ))}
@@ -312,7 +319,7 @@ export const ManagerAIPlanner: React.FC = () => {
                   </div>
 
                   {/* Impact Summary */}
-                  <p className="text-[11px] text-slate-600 italic bg-amber-50/60 p-2 rounded border border-amber-200">
+                  <p className="text-[11px] text-zinc-400 italic bg-zinc-950/40 p-2 rounded-md border border-zinc-800">
                     {currentPlan.impact_summary}
                   </p>
                 </div>
@@ -323,14 +330,14 @@ export const ManagerAIPlanner: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setApprovalModalOpen(true)}
-                  className="w-full py-2 bg-rail-maroon hover:bg-rail-maroon-dark text-white font-bold text-xs rounded transition-colors shadow-xs"
+                  className="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs rounded-md transition-colors shadow-sm"
                 >
-                  Approve & Publish {currentPlan?.name?.split(' ')[0] || 'Plan A'}
+                  Approve &amp; Publish {currentPlan?.name?.split(' ')[0] || 'Plan A'}
                 </button>
                 <button
                   type="button"
                   onClick={() => setRejectModalOpen(true)}
-                  className="w-full py-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs rounded transition-colors"
+                  className="w-full py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 font-medium text-xs rounded-md transition-colors"
                 >
                   Request Revision / Modify
                 </button>
@@ -342,15 +349,15 @@ export const ManagerAIPlanner: React.FC = () => {
 
       {/* Approval Confirmation Modal */}
       {approvalModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-2xs">
-          <div className="bg-white rounded-lg border border-slate-300 shadow-xl max-w-md w-full p-5 text-slate-800">
-            <h3 className="font-bold text-base text-slate-900 mb-2">Confirm Operational Plan Approval</h3>
-            <p className="text-xs text-slate-600 mb-4">
-              You are authorizing railway corridor possession for <strong>Corridor C2</strong> on{' '}
-              <strong>{currentPlan?.slot || '14:30 – 15:15'}</strong>. This will publish the timetable and notify the assigned field engineering crew.
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
+          <div className="bg-zinc-900 rounded-lg border border-zinc-800 shadow-2xl max-w-md w-full p-5 text-zinc-100">
+            <h3 className="font-semibold text-base text-zinc-100 mb-2">Confirm Operational Plan Approval</h3>
+            <p className="text-xs text-zinc-400 mb-4">
+              You are authorizing railway corridor possession for <strong className="text-zinc-200">Corridor C2</strong> on{' '}
+              <strong className="text-zinc-200">{currentPlan?.slot || '14:30 – 15:15'}</strong>. This will publish the timetable and notify the assigned field engineering crew.
             </p>
 
-            <div className="bg-slate-50 p-3 rounded border border-slate-200 text-xs mb-4 space-y-1 font-mono">
+            <div className="bg-zinc-950/60 p-3 rounded-md border border-zinc-800 text-xs mb-4 space-y-1 font-mono text-zinc-300">
               <div>Plan Number: {candidatesData?.plan_number || 'PLAN-2026-00042'}</div>
               <div>Selected Alternative: {currentPlan?.name || 'Plan A'}</div>
               <div>Train Impact: {currentPlan?.train_impact_minutes || 0} minutes</div>
@@ -360,7 +367,7 @@ export const ManagerAIPlanner: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setApprovalModalOpen(false)}
-                className="px-3 py-1.5 border border-slate-300 rounded font-semibold text-slate-700 hover:bg-slate-50"
+                className="px-3 py-1.5 border border-zinc-700 rounded-md font-medium text-zinc-300 hover:bg-zinc-800 transition-colors"
               >
                 Cancel
               </button>
@@ -368,7 +375,7 @@ export const ManagerAIPlanner: React.FC = () => {
                 type="button"
                 onClick={() => approveMutation.mutate(candidatesData?.plan_id || 42)}
                 disabled={approveMutation.isPending}
-                className="px-3.5 py-1.5 bg-rail-maroon text-white font-bold rounded hover:bg-rail-maroon-dark disabled:opacity-50"
+                className="px-3.5 py-1.5 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-500 transition-colors disabled:opacity-50"
               >
                 {approveMutation.isPending ? 'Publishing...' : 'Confirm & Publish'}
               </button>
@@ -379,10 +386,10 @@ export const ManagerAIPlanner: React.FC = () => {
 
       {/* Revision / Rejection Modal */}
       {rejectModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-2xs">
-          <div className="bg-white rounded-lg border border-slate-300 shadow-xl max-w-md w-full p-5 text-slate-800">
-            <h3 className="font-bold text-base text-slate-900 mb-2">Request Plan Changes</h3>
-            <p className="text-xs text-slate-600 mb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
+          <div className="bg-zinc-900 rounded-lg border border-zinc-800 shadow-2xl max-w-md w-full p-5 text-zinc-100">
+            <h3 className="font-semibold text-base text-zinc-100 mb-2">Request Plan Changes</h3>
+            <p className="text-xs text-zinc-400 mb-3">
               Please enter the operational reason for rejecting or modifying this candidate plan:
             </p>
             <textarea
@@ -390,13 +397,13 @@ export const ManagerAIPlanner: React.FC = () => {
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
               placeholder="e.g., Target window conflicts with VIP express rake transfer on Section C2..."
-              className="w-full text-xs p-2.5 border border-slate-300 rounded focus:ring-1 focus:ring-rail-maroon focus:outline-none mb-4"
+              className="w-full text-xs p-2.5 bg-zinc-950 border border-zinc-800 rounded-md text-zinc-200 focus:border-blue-500 focus:outline-hidden mb-4 resize-none"
             />
             <div className="flex justify-end space-x-2 text-xs">
               <button
                 type="button"
                 onClick={() => setRejectModalOpen(false)}
-                className="px-3 py-1.5 border border-slate-300 rounded font-semibold text-slate-700 hover:bg-slate-50"
+                className="px-3 py-1.5 border border-zinc-700 rounded-md font-medium text-zinc-300 hover:bg-zinc-800 transition-colors"
               >
                 Cancel
               </button>
@@ -404,7 +411,7 @@ export const ManagerAIPlanner: React.FC = () => {
                 type="button"
                 onClick={() => rejectMutation.mutate({ planId: candidatesData?.plan_id || 42, reason: rejectReason || 'Changes requested by Operations Manager' })}
                 disabled={rejectMutation.isPending}
-                className="px-3.5 py-1.5 bg-slate-800 text-white font-bold rounded hover:bg-slate-900 disabled:opacity-50"
+                className="px-3.5 py-1.5 bg-red-600 text-white font-medium rounded-md hover:bg-red-500 transition-colors disabled:opacity-50"
               >
                 Submit Revision Request
               </button>
@@ -415,3 +422,5 @@ export const ManagerAIPlanner: React.FC = () => {
     </div>
   )
 }
+
+export default ManagerAIPlanner

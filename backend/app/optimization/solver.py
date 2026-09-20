@@ -2,6 +2,7 @@ import time
 from typing import List, Dict, Any, Optional, Tuple
 from datetime import datetime, timedelta
 from ortools.sat.python import cp_model
+from .clustering import MaintenanceClusteringEngine
 
 class RailwayBlockOptimizer:
     """
@@ -182,8 +183,8 @@ class RailwayBlockOptimizer:
                 b_dur = getattr(b, "duration_minutes", 120)
                 # Durations sum
                 dur_terms = [tasks_by_id[t_id].estimated_duration * var for t_id, var in b_tasks]
-                # If combined, allow concurrent overlapping work up to 1.4x total sum
-                model.Add(sum(dur_terms) <= int(b_dur * 1.4)).OnlyEnforceIf(is_combined[b_id])
+                # If combined multi-crew possession, allow concurrent overlapping work across departments up to 1.8x
+                model.Add(sum(dur_terms) <= int(b_dur * 1.8)).OnlyEnforceIf(is_combined[b_id])
                 model.Add(sum(dur_terms) <= b_dur).OnlyEnforceIf(is_combined[b_id].Not())
 
         # Department Concurrent Teams limit
@@ -241,15 +242,37 @@ class RailwayBlockOptimizer:
             ))
             obj_terms.append(coeff * completed[t_id])
 
+        # Identify spatial shadow clusters across departments
+        shadow_clusters = MaintenanceClusteringEngine.identify_shadow_clusters(self.tasks)
+        cluster_in_block: Dict[Tuple[str, int], cp_model.IntVar] = {}
+
+        for c in shadow_clusters:
+            if c["is_multi_department"] and len(c["tasks"]) >= 2:
+                c_id = c["cluster_id"]
+                c_tids = [t_item["task_id"] for t_item in c["tasks"]]
+                for b in self.block_windows:
+                    b_id = b.block_id
+                    cluster_in_block[(c_id, b_id)] = model.NewBoolVar(f"clust_{c_id}_{b_id}")
+                    # If all tasks in cluster are assigned to block b, cluster_in_block can be 1
+                    b_vars = [x[(tid, b_id)] for tid in c_tids if (tid, b_id) in candidate_pairs]
+                    if len(b_vars) == len(c_tids):
+                        model.Add(sum(b_vars) >= len(c_tids)).OnlyEnforceIf(cluster_in_block[(c_id, b_id)])
+                        model.Add(sum(b_vars) < len(c_tids)).OnlyEnforceIf(cluster_in_block[(c_id, b_id)].Not())
+                        # Add significant shadow bonus
+                        shadow_coeff = int(round(self.w_coordination * 3500.0))
+                        obj_terms.append(shadow_coeff * cluster_in_block[(c_id, b_id)])
+                    else:
+                        model.Add(cluster_in_block[(c_id, b_id)] == 0)
+
         for b in self.block_windows:
             b_id = b.block_id
             # Coordination bonus
             coord_coeff = int(round(self.w_coordination * 2500.0))
             obj_terms.append(coord_coeff * is_combined[b_id])
 
-            # Train disruption penalty
+            # Train disruption penalty (economic delay cost scaling)
             impact = block_train_impact.get(b_id, 0)
-            train_coeff = int(round(self.w_train * impact * 15.0))
+            train_coeff = int(round(self.w_train * impact * 18.0))
             obj_terms.append(-train_coeff * block_used[b_id])
 
             # Efficiency penalty for small blocks used
@@ -367,15 +390,19 @@ class RailwayBlockOptimizer:
             "assignments": assignments,
             "deferred_tasks": deferred,
             "bundled_blocks": bundled_blocks,
+            "shadow_clusters": [c for c in shadow_clusters if c["is_multi_department"]],
             "metrics": {
                 "asset_availability": asset_avail,
                 "train_impact_minutes": total_train_delay,
                 "block_hours": total_block_hours,
+                "saved_downtime_hours": round(sum(b.get("saved_minutes", 0) for b in bundled_blocks) / 60.0, 1),
+                "delay_cost_saved_inr": sum(b.get("saved_minutes", 0) for b in bundled_blocks) * 250,
                 "tasks_completed": completed_count,
                 "tasks_deferred": len(deferred),
                 "conflicts": 0,
                 "utilization": avg_utilization,
                 "coordination_events": len(bundled_blocks),
+                "shadow_clusters_count": len([c for c in shadow_clusters if c["is_multi_department"]]),
                 "dataset_type": "synthetic/demo"
             },
             "solver_stats": {

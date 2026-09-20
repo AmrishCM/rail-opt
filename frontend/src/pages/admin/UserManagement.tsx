@@ -156,21 +156,21 @@ export const UserManagement: React.FC = () => {
       )}
 
       {/* Filters & Search Bar */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3 text-xs">
+      <div className="bg-zinc-900 p-4 rounded-lg border border-zinc-800 flex flex-wrap items-center justify-between gap-3 text-xs">
         <form onSubmit={handleSearchSubmit} className="flex items-center space-x-2 flex-1 min-w-[240px]">
           <div className="relative flex-1">
-            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+            <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-2.5" strokeWidth={1.5} />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by Employee ID, Name, or Email..."
-              className="w-full pl-9 pr-3 py-1.5 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
+              className="w-full pl-9 pr-3 py-1.5 bg-zinc-950 border border-zinc-800 rounded-md text-xs text-zinc-200 focus:outline-hidden focus:border-blue-500"
             />
           </div>
           <button
             type="submit"
-            className="px-3 py-1.5 bg-slate-900 text-white font-bold rounded-lg hover:bg-slate-800"
+            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-md font-medium text-xs transition-colors"
           >
             Search
           </button>
@@ -180,69 +180,76 @@ export const UserManagement: React.FC = () => {
           <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
-            className="px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs font-medium"
+            className="bg-zinc-950 border border-zinc-800 rounded-md px-2.5 py-1.5 text-xs text-zinc-300 focus:border-blue-500 focus:outline-hidden"
           >
-            <option value="">All Roles</option>
-            <option value="SYSTEM_ADMIN">System Administrator</option>
-            <option value="OPERATIONS_MANAGER">Operations Manager</option>
+            <option value="ALL">All Roles</option>
             <option value="MAINTENANCE_ENGINEER">Maintenance Engineer</option>
-            <option value="TRACK_USER">Track Supervisor</option>
-            <option value="SIGNAL_USER">S&T Engineer</option>
-            <option value="TRACTION_USER">Traction Foreman</option>
+            <option value="OPERATIONS_MANAGER">Operations Manager</option>
+            <option value="TRACK_USER">Track User</option>
+            <option value="SIGNAL_USER">Signal User</option>
+            <option value="TRACTION_USER">Traction User</option>
             <option value="FIELD_INSPECTOR">Field Inspector</option>
-            <option value="AUDITOR_VIEWER">Safety Auditor</option>
+            <option value="AUDITOR_VIEWER">Auditor / Viewer</option>
+            <option value="SYSTEM_ADMIN">System Admin</option>
           </select>
 
           <select
             value={departmentFilter}
             onChange={(e) => setDepartmentFilter(e.target.value)}
-            className="px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs font-medium"
+            className="bg-zinc-950 border border-zinc-800 rounded-md px-2.5 py-1.5 text-xs text-zinc-300 focus:border-blue-500 focus:outline-hidden"
           >
-            <option value="">All Departments</option>
-            <option value="Engineering/Track">Engineering/Track</option>
-            <option value="S&T/Signalling">S&T/Signalling</option>
-            <option value="Traction Distribution">Traction Distribution</option>
-            <option value="Operating Department">Operating Department</option>
-            <option value="Safety Directorate">Safety Directorate</option>
-            <option value="Railway Board / IT">Railway Board / IT</option>
+            <option value="ALL">All Departments</option>
+            <option value="Engineering/Track">Track / Civil</option>
+            <option value="S&T/Signalling">S&amp;T</option>
+            <option value="Traction Distribution">Traction (OHE)</option>
+            <option value="Operating Department">Operations</option>
+            <option value="Safety Directorate">Safety</option>
           </select>
 
           <button
-            onClick={loadUsers}
-            className="p-1.5 text-slate-500 hover:text-slate-800 border border-slate-200 rounded-lg hover:bg-slate-50"
-            title="Refresh"
+            onClick={() => setCreateModalOpen(true)}
+            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-md font-medium text-xs flex items-center space-x-1.5 transition-colors"
           >
-            <RefreshCw className="w-4 h-4" />
+            <UserPlus className="w-3.5 h-3.5" strokeWidth={1.5} />
+            <span>Add User</span>
+          </button>
+
+          <button
+            onClick={loadUsers}
+            className="p-1.5 rounded-md border border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-colors"
+            title="Reload users"
+          >
+            <RefreshCw className="w-4 h-4" strokeWidth={1.5} />
           </button>
         </div>
       </div>
 
       {/* Users Table */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+      <div className="bg-zinc-900 rounded-lg border border-zinc-800 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider font-extrabold text-[10px]">
+            <thead className="bg-zinc-950/60 border-b border-zinc-800 text-zinc-400 uppercase tracking-wider font-mono text-[10px]">
               <tr>
                 <th className="py-3 px-4">Employee ID</th>
-                <th className="py-3 px-4">Name & Email</th>
+                <th className="py-3 px-4">Name &amp; Email</th>
                 <th className="py-3 px-4">Assigned Role</th>
-                <th className="py-3 px-4">Department & Division</th>
+                <th className="py-3 px-4">Department &amp; Division</th>
                 <th className="py-3 px-4">Section Scope</th>
                 <th className="py-3 px-4">Status</th>
                 <th className="py-3 px-4">Last Login</th>
                 <th className="py-3 px-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-zinc-800/80">
               {loading ? (
                 <tr>
-                  <td colSpan={8} className="p-8 text-center text-slate-400 font-bold">
+                  <td colSpan={8} className="p-8 text-center text-zinc-500 font-medium">
                     Loading users database...
                   </td>
                 </tr>
               ) : users.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="p-8 text-center text-slate-400 font-bold">
+                  <td colSpan={8} className="p-8 text-center text-zinc-500 font-medium">
                     No users found matching query.
                   </td>
                 </tr>
@@ -314,13 +321,13 @@ export const UserManagement: React.FC = () => {
 
       {/* Create User Modal */}
       {createModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl p-6 max-w-lg w-full border border-slate-200 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="text-sm font-black text-slate-900 uppercase tracking-wide">
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-zinc-900 rounded-lg p-6 max-w-lg w-full border border-zinc-800 shadow-2xl space-y-4 text-zinc-100">
+            <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
+              <h3 className="text-sm font-semibold text-zinc-100 uppercase tracking-wide">
                 Create New Railway User
               </h3>
-              <button onClick={() => setCreateModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+              <button onClick={() => setCreateModalOpen(false)} className="text-zinc-400 hover:text-zinc-200">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -328,61 +335,61 @@ export const UserManagement: React.FC = () => {
             <form onSubmit={handleCreateUser} className="space-y-3 text-xs">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">Employee ID</label>
+                  <label className="block font-mono text-[10px] uppercase text-zinc-400 mb-1">Employee ID</label>
                   <input
                     type="text"
                     required
                     value={newEmployeeId}
                     onChange={(e) => setNewEmployeeId(e.target.value)}
                     placeholder="e.g. EMP-ENG-042"
-                    className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs"
+                    className="w-full px-3 py-1.5 bg-zinc-950 border border-zinc-800 rounded-md text-xs text-zinc-200 focus:border-blue-500 focus:outline-hidden"
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">Full Name</label>
+                  <label className="block font-mono text-[10px] uppercase text-zinc-400 mb-1">Full Name</label>
                   <input
                     type="text"
                     required
                     value={newFullName}
                     onChange={(e) => setNewFullName(e.target.value)}
                     placeholder="e.g. Anand Sharma"
-                    className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs"
+                    className="w-full px-3 py-1.5 bg-zinc-950 border border-zinc-800 rounded-md text-xs text-zinc-200 focus:border-blue-500 focus:outline-hidden"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">Email Address</label>
+                  <label className="block font-mono text-[10px] uppercase text-zinc-400 mb-1">Email Address</label>
                   <input
                     type="email"
                     required
                     value={newEmail}
                     onChange={(e) => setNewEmail(e.target.value)}
                     placeholder="anand@railopt.demo"
-                    className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs"
+                    className="w-full px-3 py-1.5 bg-zinc-950 border border-zinc-800 rounded-md text-xs text-zinc-200 focus:border-blue-500 focus:outline-hidden"
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">Temporary Password</label>
+                  <label className="block font-mono text-[10px] uppercase text-zinc-400 mb-1">Temporary Password</label>
                   <input
                     type="password"
                     required
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder="Min 8 characters"
-                    className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs"
+                    className="w-full px-3 py-1.5 bg-zinc-950 border border-zinc-800 rounded-md text-xs text-zinc-200 focus:border-blue-500 focus:outline-hidden"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">Assigned Role</label>
+                  <label className="block font-mono text-[10px] uppercase text-zinc-400 mb-1">Assigned Role</label>
                   <select
                     value={newRole}
                     onChange={(e) => setNewRole(e.target.value)}
-                    className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-bold"
+                    className="w-full px-3 py-1.5 bg-zinc-950 border border-zinc-800 rounded-md text-xs text-zinc-200 focus:border-blue-500 focus:outline-hidden"
                   >
                     <option value="MAINTENANCE_ENGINEER">Maintenance Engineer</option>
                     <option value="OPERATIONS_MANAGER">Operations Manager</option>
@@ -396,11 +403,11 @@ export const UserManagement: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">Department</label>
+                  <label className="block font-mono text-[10px] uppercase text-zinc-400 mb-1">Department</label>
                   <select
                     value={newDepartment}
                     onChange={(e) => setNewDepartment(e.target.value)}
-                    className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs"
+                    className="w-full px-3 py-1.5 bg-zinc-950 border border-zinc-800 rounded-md text-xs text-zinc-200 focus:border-blue-500 focus:outline-hidden"
                   >
                     <option value="Engineering/Track">Engineering/Track</option>
                     <option value="S&T/Signalling">S&T/Signalling</option>
@@ -413,27 +420,27 @@ export const UserManagement: React.FC = () => {
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700 mb-1">Section Code Scope</label>
+                <label className="block font-mono text-[10px] uppercase text-zinc-400 mb-1">Section Code Scope</label>
                 <input
                   type="text"
                   value={newSection}
                   onChange={(e) => setNewSection(e.target.value)}
                   placeholder="e.g. C2-02 or ALL"
-                  className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-mono"
+                  className="w-full px-3 py-1.5 bg-zinc-950 border border-zinc-800 rounded-md text-xs font-mono text-zinc-200 focus:border-blue-500 focus:outline-hidden"
                 />
               </div>
 
-              <div className="flex justify-end space-x-2 pt-3 border-t border-slate-100">
+              <div className="flex justify-end space-x-2 pt-3 border-t border-zinc-800">
                 <button
                   type="button"
                   onClick={() => setCreateModalOpen(false)}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold"
+                  className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-md font-medium transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-sm"
+                  className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-md font-medium shadow-sm transition-colors"
                 >
                   Create User
                 </button>
@@ -445,16 +452,16 @@ export const UserManagement: React.FC = () => {
 
       {/* Password Reset Modal */}
       {resetModalUser && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full border border-slate-200 shadow-2xl space-y-4">
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-zinc-900 rounded-lg p-6 max-w-sm w-full border border-zinc-800 shadow-2xl space-y-4 text-zinc-100">
             <div className="flex items-center space-x-2">
-              <KeyRound className="w-5 h-5 text-blue-600" />
-              <h3 className="text-sm font-black text-slate-900">
+              <KeyRound className="w-5 h-5 text-blue-400" strokeWidth={1.5} />
+              <h3 className="text-sm font-semibold text-zinc-100">
                 Reset Password: {resetModalUser.employee_id}
               </h3>
             </div>
-            <p className="text-xs text-slate-500">
-              Enter a temporary password for <strong>{resetModalUser.full_name}</strong>. Their active sessions will be invalidated immediately.
+            <p className="text-xs text-zinc-400">
+              Enter a temporary password for <strong className="text-zinc-200">{resetModalUser.full_name}</strong>. Their active sessions will be invalidated immediately.
             </p>
             <form onSubmit={handleResetPassword} className="space-y-3">
               <input
@@ -463,19 +470,19 @@ export const UserManagement: React.FC = () => {
                 value={tempPassword}
                 onChange={(e) => setTempPassword(e.target.value)}
                 placeholder="New temporary password..."
-                className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl"
+                className="w-full px-3 py-2 text-xs bg-zinc-950 border border-zinc-800 rounded-md text-zinc-200 focus:border-blue-500 focus:outline-hidden"
               />
-              <div className="flex justify-end space-x-2 pt-2">
+              <div className="flex justify-end space-x-2 pt-2 border-t border-zinc-800">
                 <button
                   type="button"
                   onClick={() => setResetModalUser(null)}
-                  className="px-4 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl"
+                  className="px-4 py-1.5 text-xs font-medium text-zinc-400 hover:bg-zinc-800 rounded-md transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-xl"
+                  className="px-4 py-1.5 text-xs font-medium bg-blue-600 hover:bg-blue-500 text-white rounded-md transition-colors"
                 >
                   Save Password
                 </button>
@@ -489,3 +496,4 @@ export const UserManagement: React.FC = () => {
 }
 
 export default UserManagement
+

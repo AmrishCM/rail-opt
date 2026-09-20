@@ -84,21 +84,21 @@ export const RailwayTimeline: React.FC<RailwayTimelineProps> = ({
   }
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+    <div className="bg-zinc-900 rounded-lg border border-zinc-800 overflow-hidden">
       {/* Top Controls Bar */}
-      <div className="p-4 border-b border-slate-200 bg-slate-50/50 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div className="p-4 border-b border-zinc-800 bg-zinc-950/40 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="flex items-center space-x-3">
           <div className="p-2 rounded-lg bg-railway-navy text-white shadow-xs">
             <Clock className="w-5 h-5 text-amber-400" />
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <h3 className="font-bold text-slate-900 text-base">Corridor Possession Timeline</h3>
-              <span className="text-[11px] font-bold bg-amber-100 text-amber-900 px-2 py-0.5 rounded border border-amber-300">
+              <h3 className="font-medium text-zinc-100 text-base">Corridor Possession Timeline</h3>
+              <span className="text-[11px] font-mono bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded border border-amber-500/20">
                 {timeline?.corridor_name || `Corridor C${selectedCorridor}`}
               </span>
             </div>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-zinc-500 font-mono">
               High-fidelity minute-by-minute visualization: Train services vs Maintenance blocks
             </p>
           </div>
@@ -110,7 +110,7 @@ export const RailwayTimeline: React.FC<RailwayTimelineProps> = ({
           <select
             value={selectedCorridor}
             onChange={(e) => setSelectedCorridor(Number(e.target.value))}
-            className="px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg font-medium text-slate-700 focus:outline-none focus:ring-1 focus:ring-amber-500"
+            className="px-2.5 py-1.5 bg-zinc-950 border border-zinc-700 rounded font-mono text-zinc-200 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
           >
             <option value={1}>Corridor C1 (Delhi - Kanpur)</option>
             <option value={2}>Corridor C2 (Ghaziabad - Aligarh)</option>
@@ -121,7 +121,7 @@ export const RailwayTimeline: React.FC<RailwayTimelineProps> = ({
           <select
             value={departmentFilter}
             onChange={(e) => setDepartmentFilter(e.target.value)}
-            className="px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg font-medium text-slate-700 focus:outline-none focus:ring-1 focus:ring-amber-500"
+            className="px-2.5 py-1.5 bg-zinc-950 border border-zinc-700 rounded font-mono text-zinc-200 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
           >
             <option value="">All Departments</option>
             <option value="Engineering/Track">Engineering (Track)</option>
@@ -130,24 +130,24 @@ export const RailwayTimeline: React.FC<RailwayTimelineProps> = ({
           </select>
 
           {/* Date Navigation */}
-          <div className="flex items-center bg-white border border-slate-300 rounded-lg overflow-hidden">
+          <div className="flex items-center bg-zinc-950 border border-zinc-700 rounded overflow-hidden">
             <button
               onClick={handlePrevDay}
               title="Previous Day"
-              className="px-2 py-1.5 hover:bg-slate-100 text-slate-600 transition-colors border-r border-slate-200"
+              className="px-2 py-1.5 hover:bg-zinc-800 text-zinc-400 transition-colors border-r border-zinc-800"
             >
               <ChevronLeft className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={handleToday}
-              className={`px-2.5 py-1.5 font-semibold text-[11px] hover:bg-slate-100 transition-colors ${currentDate === '2026-09-15' ? 'bg-amber-50 text-amber-800' : 'text-slate-700'}`}
+              className={`px-2.5 py-1.5 font-mono text-[11px] hover:bg-zinc-800 transition-colors ${currentDate === '2026-09-15' ? 'bg-amber-500/10 text-amber-400' : 'text-zinc-300'}`}
             >
               Today (15 Sep)
             </button>
             <button
               onClick={handleNextDay}
               title="Next Day"
-              className="px-2 py-1.5 hover:bg-slate-100 text-slate-600 transition-colors border-l border-slate-200"
+              className="px-2 py-1.5 hover:bg-zinc-800 text-zinc-400 transition-colors border-l border-zinc-800"
             >
               <ChevronRight className="w-3.5 h-3.5" />
             </button>
@@ -156,7 +156,7 @@ export const RailwayTimeline: React.FC<RailwayTimelineProps> = ({
           {/* History Toggle */}
           <button
             onClick={() => setShowHistory(!showHistory)}
-            className={`flex items-center space-x-1 px-2.5 py-1.5 rounded-lg border font-medium transition-colors ${showHistory ? 'bg-purple-100 text-purple-900 border-purple-300' : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'}`}
+            className={`flex items-center space-x-1 px-2.5 py-1.5 rounded border font-mono text-xs transition-colors ${showHistory ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' : 'bg-zinc-950 text-zinc-400 border-zinc-700 hover:bg-zinc-800'}`}
             title="Toggle previous plan versions (v1 replaced by v2)"
           >
             <History className="w-3.5 h-3.5 text-purple-700" />
@@ -319,7 +319,7 @@ export const RailwayTimeline: React.FC<RailwayTimelineProps> = ({
                   <span className="font-bold text-[11px] truncate">
                     🛡 {b.label}
                   </span>
-                  <span className="text-[10px] font-bold text-amber-900 bg-white/80 px-1.5 py-0.5 rounded border border-amber-300 flex-shrink-0 ml-1">
+                  <span className="text-[10px] font-mono text-amber-400 bg-zinc-900/80 px-1.5 py-0.5 rounded border border-amber-500/20 flex-shrink-0 ml-1">
                     {b.start_time}–{b.end_time}
                   </span>
                 </div>
@@ -366,19 +366,19 @@ export const RailwayTimeline: React.FC<RailwayTimelineProps> = ({
       {/* Interactive Detail Modal (Section 32) */}
       {activeModalItem && (
         <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-lg w-full p-5 space-y-4 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+          <div className="bg-zinc-900 rounded-lg shadow-xl border border-zinc-800 max-w-lg w-full p-5 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
               <div className="flex items-center space-x-2">
                 <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded ${activeModalItem.type === 'train' ? 'bg-slate-800 text-white' : (activeModalItem.type === 'block' ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-sky-100 text-sky-900 border border-sky-300')}`}>
                   {activeModalItem.type}
                 </span>
-                <h4 className="font-bold text-slate-900 text-sm">
+                <h4 className="font-medium text-zinc-100 text-sm">
                   {activeModalItem.label || activeModalItem.id}
                 </h4>
               </div>
               <button
                 onClick={() => setActiveModalItem(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                className="p-1 rounded text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -388,20 +388,20 @@ export const RailwayTimeline: React.FC<RailwayTimelineProps> = ({
             {activeModalItem.type === 'train' && (
               <div className="grid grid-cols-2 gap-3 text-xs">
                 <div className="bg-slate-50 p-2.5 rounded-lg">
-                  <span className="text-slate-400 block text-[10px] font-semibold">Train Number</span>
-                  <span className="font-bold text-slate-800">{activeModalItem.train_number}</span>
+                  <span className="text-zinc-500 block text-[10px] font-mono">Train Number</span>
+                  <span className="font-medium text-zinc-200">{activeModalItem.train_number}</span>
                 </div>
                 <div className="bg-slate-50 p-2.5 rounded-lg">
-                  <span className="text-slate-400 block text-[10px] font-semibold">Type / Priority</span>
-                  <span className="font-bold text-slate-800">{activeModalItem.train_type} ({activeModalItem.priority})</span>
+                  <span className="text-zinc-500 block text-[10px] font-mono">Type / Priority</span>
+                  <span className="font-medium text-zinc-200">{activeModalItem.train_type} ({activeModalItem.priority})</span>
                 </div>
                 <div className="bg-slate-50 p-2.5 rounded-lg">
-                  <span className="text-slate-400 block text-[10px] font-semibold">Scheduled Window</span>
-                  <span className="font-bold text-slate-800">{activeModalItem.start_time} – {activeModalItem.end_time}</span>
+                  <span className="text-zinc-500 block text-[10px] font-mono">Scheduled Window</span>
+                  <span className="font-medium text-zinc-200">{activeModalItem.start_time} – {activeModalItem.end_time}</span>
                 </div>
                 <div className="bg-slate-50 p-2.5 rounded-lg">
-                  <span className="text-slate-400 block text-[10px] font-semibold">Section</span>
-                  <span className="font-bold text-slate-800">{activeModalItem.section_name}</span>
+                  <span className="text-zinc-500 block text-[10px] font-mono">Section</span>
+                  <span className="font-medium text-zinc-200">{activeModalItem.section_name}</span>
                 </div>
               </div>
             )}
@@ -410,31 +410,31 @@ export const RailwayTimeline: React.FC<RailwayTimelineProps> = ({
             {activeModalItem.type === 'maintenance' && (
               <div className="space-y-3 text-xs">
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-slate-50 p-2.5 rounded-lg">
-                    <span className="text-slate-400 block text-[10px] font-semibold">Plan Number & Version</span>
-                    <span className="font-bold text-slate-800">{activeModalItem.plan_number} (v{activeModalItem.plan_version})</span>
+                  <div className="bg-zinc-950/60 p-2.5 rounded border border-zinc-800">
+                    <span className="text-zinc-500 block text-[10px] font-mono">Plan Number & Version</span>
+                    <span className="font-medium text-zinc-200">{activeModalItem.plan_number} (v{activeModalItem.plan_version})</span>
                   </div>
-                  <div className="bg-slate-50 p-2.5 rounded-lg">
-                    <span className="text-slate-400 block text-[10px] font-semibold">Task Reference</span>
-                    <span className="font-bold text-slate-800">{activeModalItem.task_reference}</span>
+                  <div className="bg-zinc-950/60 p-2.5 rounded border border-zinc-800">
+                    <span className="text-zinc-500 block text-[10px] font-mono">Task Reference</span>
+                    <span className="font-medium text-zinc-200">{activeModalItem.task_reference}</span>
                   </div>
-                  <div className="bg-slate-50 p-2.5 rounded-lg">
-                    <span className="text-slate-400 block text-[10px] font-semibold">Department & Team</span>
-                    <span className="font-bold text-slate-800">{activeModalItem.team}</span>
+                  <div className="bg-zinc-950/60 p-2.5 rounded border border-zinc-800">
+                    <span className="text-zinc-500 block text-[10px] font-mono">Department & Team</span>
+                    <span className="font-medium text-zinc-200">{activeModalItem.team}</span>
                   </div>
-                  <div className="bg-slate-50 p-2.5 rounded-lg">
-                    <span className="text-slate-400 block text-[10px] font-semibold">Status</span>
+                  <div className="bg-zinc-950/60 p-2.5 rounded border border-zinc-800">
+                    <span className="text-zinc-500 block text-[10px] font-mono">Status</span>
                     <span className={`font-bold ${activeModalItem.status === 'SUPERSEDED' ? 'text-slate-400 line-through' : 'text-emerald-700'}`}>
                       {activeModalItem.status}
                     </span>
                   </div>
                   <div className="bg-slate-50 p-2.5 rounded-lg col-span-2">
-                    <span className="text-slate-400 block text-[10px] font-semibold">Possession Time Window</span>
-                    <span className="font-bold text-slate-800">{activeModalItem.start_time} – {activeModalItem.end_time} ({activeModalItem.duration_minutes} minutes)</span>
+                    <span className="text-zinc-500 block text-[10px] font-mono">Possession Time Window</span>
+                    <span className="font-medium text-zinc-200">{activeModalItem.start_time} – {activeModalItem.end_time} ({activeModalItem.duration_minutes} minutes)</span>
                   </div>
                 </div>
                 <div className="bg-slate-50 p-2.5 rounded-lg">
-                  <span className="text-slate-400 block text-[10px] font-semibold">Work Description</span>
+                  <span className="text-zinc-500 block text-[10px] font-mono">Work Description</span>
                   <p className="font-medium text-slate-800">{activeModalItem.description}</p>
                 </div>
               </div>
@@ -444,19 +444,19 @@ export const RailwayTimeline: React.FC<RailwayTimelineProps> = ({
             {activeModalItem.type === 'block' && (
               <div className="grid grid-cols-2 gap-3 text-xs">
                 <div className="bg-slate-50 p-2.5 rounded-lg">
-                  <span className="text-slate-400 block text-[10px] font-semibold">Block Type</span>
-                  <span className="font-bold text-slate-800">{activeModalItem.block_type}</span>
+                  <span className="text-zinc-500 block text-[10px] font-mono">Block Type</span>
+                  <span className="font-medium text-zinc-200">{activeModalItem.block_type}</span>
                 </div>
                 <div className="bg-slate-50 p-2.5 rounded-lg">
-                  <span className="text-slate-400 block text-[10px] font-semibold">Section</span>
-                  <span className="font-bold text-slate-800">{activeModalItem.section_name}</span>
+                  <span className="text-zinc-500 block text-[10px] font-mono">Section</span>
+                  <span className="font-medium text-zinc-200">{activeModalItem.section_name}</span>
                 </div>
                 <div className="bg-slate-50 p-2.5 rounded-lg">
-                  <span className="text-slate-400 block text-[10px] font-semibold">Window</span>
-                  <span className="font-bold text-slate-800">{activeModalItem.start_time} – {activeModalItem.end_time}</span>
+                  <span className="text-zinc-500 block text-[10px] font-mono">Window</span>
+                  <span className="font-medium text-zinc-200">{activeModalItem.start_time} – {activeModalItem.end_time}</span>
                 </div>
                 <div className="bg-slate-50 p-2.5 rounded-lg">
-                  <span className="text-slate-400 block text-[10px] font-semibold">Capacity Utilization</span>
+                  <span className="text-zinc-500 block text-[10px] font-mono">Capacity Utilization</span>
                   <span className="font-bold text-amber-800">{activeModalItem.utilization || '89.4%'}</span>
                 </div>
               </div>
@@ -465,7 +465,7 @@ export const RailwayTimeline: React.FC<RailwayTimelineProps> = ({
             <div className="pt-2 flex justify-end">
               <button
                 onClick={() => setActiveModalItem(null)}
-                className="px-4 py-2 rounded-lg bg-slate-900 text-white font-medium text-xs hover:bg-slate-800 transition-colors"
+                className="px-4 py-2 rounded bg-blue-600 text-white font-medium text-xs hover:bg-blue-500 transition-colors"
               >
                 Close Details
               </button>

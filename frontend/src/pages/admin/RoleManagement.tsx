@@ -58,29 +58,32 @@ export const RoleManagement: React.FC = () => {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
       {/* Header */}
-      <div className="pb-4 border-b border-slate-200">
-        <div className="flex items-center space-x-2">
-          <h1 className="text-xl font-black text-slate-900 tracking-tight">Roles & Permissions</h1>
-          <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-blue-100 text-blue-800">
-            SECURITY RBAC MATRIX
-          </span>
+      <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center space-x-2 text-blue-400 font-mono text-[11px] uppercase tracking-wider mb-1">
+            <Shield className="w-3.5 h-3.5" strokeWidth={1.5} />
+            <span>Security RBAC Matrix</span>
+          </div>
+          <h1 className="text-xl sm:text-2xl font-semibold text-zinc-100 tracking-tight">
+            Roles &amp; Permissions Management
+          </h1>
+          <p className="text-xs text-zinc-400 mt-1">
+            Review central role-based authorization matrix. Permissions are enforced directly on all backend API endpoints
+          </p>
         </div>
-        <p className="text-xs text-slate-500 mt-0.5">
-          Review central role-based authorization matrix. Permissions are enforced directly on all backend API endpoints.
-        </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column: Role Selector */}
         <div className="space-y-3">
-          <div className="text-xs font-bold uppercase tracking-wider text-slate-500 px-1">
+          <div className="text-xs font-mono uppercase tracking-wider text-zinc-400 px-1">
             Railway Roles ({roles.length})
           </div>
           <div className="space-y-2">
             {loading ? (
-              <div className="p-4 bg-white rounded-xl border border-slate-200 text-center text-xs text-slate-400 font-bold">
+              <div className="p-6 bg-zinc-900 rounded-lg border border-zinc-800 text-center text-xs text-zinc-500">
                 Loading roles...
               </div>
             ) : (
@@ -90,21 +93,21 @@ export const RoleManagement: React.FC = () => {
                   <button
                     key={r.role_id}
                     onClick={() => setSelectedRole(r)}
-                    className={`w-full text-left p-3.5 rounded-xl border transition-all ${
+                    className={`w-full text-left p-3.5 rounded-lg border transition-colors ${
                       isSelected
-                        ? 'bg-blue-50 border-blue-300 shadow-xs ring-1 ring-blue-500'
-                        : 'bg-white border-slate-200 hover:bg-slate-50'
+                        ? 'bg-blue-500/10 border-blue-500/40 text-zinc-100'
+                        : 'bg-zinc-900 border-zinc-800 hover:border-zinc-700 text-zinc-300'
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="font-extrabold text-xs text-slate-900">{r.display_name}</span>
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-bold">
+                      <span className="font-semibold text-xs text-zinc-100">{r.display_name}</span>
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-800 text-zinc-400">
                         {r.user_count} Users
                       </span>
                     </div>
-                    <p className="text-[11px] text-slate-500 mt-1 line-clamp-2">{r.description}</p>
-                    <div className="mt-2 flex items-center space-x-2 text-[10px] font-mono text-blue-700 font-bold">
-                      <Shield className="w-3 h-3" />
+                    <p className="text-[11px] text-zinc-400 mt-1 line-clamp-2">{r.description}</p>
+                    <div className="mt-2 flex items-center space-x-2 text-[10px] font-mono text-blue-400">
+                      <Shield className="w-3 h-3" strokeWidth={1.5} />
                       <span>{r.permissions.length} Permissions Granted</span>
                     </div>
                   </button>
@@ -117,22 +120,22 @@ export const RoleManagement: React.FC = () => {
         {/* Right Column: Permission Matrix for Selected Role */}
         <div className="lg:col-span-2 space-y-4">
           {selectedRole ? (
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-              <div className="p-5 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
+            <div className="bg-zinc-900 rounded-lg border border-zinc-800 overflow-hidden">
+              <div className="p-5 border-b border-zinc-800 bg-zinc-900 flex items-center justify-between">
                 <div>
-                  <span className="text-[10px] font-extrabold uppercase text-blue-700 font-mono">
+                  <span className="text-[10px] font-mono uppercase text-blue-400">
                     {selectedRole.name}
                   </span>
-                  <h2 className="text-base font-black text-slate-900 mt-0.5">
+                  <h2 className="text-base font-semibold text-zinc-100 mt-0.5">
                     {selectedRole.display_name}
                   </h2>
-                  <p className="text-xs text-slate-500 mt-0.5">{selectedRole.description}</p>
+                  <p className="text-xs text-zinc-400 mt-0.5">{selectedRole.description}</p>
                 </div>
-                <div className="p-2 rounded-xl bg-white border border-slate-200 text-center">
-                  <span className="text-xs font-mono font-bold text-slate-500 block text-[9px] uppercase">
+                <div className="p-2.5 rounded-md bg-zinc-950/60 border border-zinc-800 text-center">
+                  <span className="text-[10px] font-mono text-zinc-500 block uppercase">
                     Security Level
                   </span>
-                  <span className="text-xs font-black text-slate-900">
+                  <span className="text-xs font-mono font-semibold text-zinc-200">
                     {selectedRole.name === 'SYSTEM_ADMIN'
                       ? 'Level 4 (Root)'
                       : selectedRole.name === 'OPERATIONS_MANAGER'
@@ -150,32 +153,32 @@ export const RoleManagement: React.FC = () => {
                     return (
                       <div
                         key={p.code}
-                        className={`p-3 rounded-xl border flex items-center justify-between transition-all ${
+                        className={`p-3 rounded-md border flex items-center justify-between transition-colors ${
                           granted
-                            ? 'bg-emerald-50/50 border-emerald-200 text-slate-800'
-                            : 'bg-slate-50/50 border-slate-100 text-slate-400'
+                            ? 'bg-emerald-500/10 border-emerald-500/30 text-zinc-200'
+                            : 'bg-zinc-950/40 border-zinc-800/80 text-zinc-500'
                         }`}
                       >
                         <div className="space-y-0.5 pr-2">
                           <div className="flex items-center space-x-1.5">
                             <span
-                              className={`text-[9px] font-bold uppercase px-1.5 py-0.2 rounded ${
-                                granted ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-500'
+                              className={`text-[9px] font-mono uppercase px-1.5 py-0.5 rounded ${
+                                granted ? 'bg-emerald-500/20 text-emerald-300' : 'bg-zinc-800 text-zinc-500'
                               }`}
                             >
                               {p.category}
                             </span>
-                            <span className="font-bold">{p.label}</span>
+                            <span className="font-medium text-zinc-200">{p.label}</span>
                           </div>
-                          <span className="text-[10px] font-mono text-slate-400 block">{p.code}</span>
+                          <span className="text-[10px] font-mono text-zinc-500 block">{p.code}</span>
                         </div>
                         {granted ? (
-                          <div className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
-                            <Check className="w-3.5 h-3.5" />
+                          <div className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                            <Check className="w-3 h-3" strokeWidth={2} />
                           </div>
                         ) : (
-                          <div className="w-6 h-6 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center shrink-0">
-                            <X className="w-3.5 h-3.5" />
+                          <div className="w-5 h-5 rounded-full bg-zinc-800 text-zinc-600 flex items-center justify-center shrink-0">
+                            <X className="w-3 h-3" strokeWidth={2} />
                           </div>
                         )}
                       </div>
@@ -185,7 +188,7 @@ export const RoleManagement: React.FC = () => {
               </div>
             </div>
           ) : (
-            <div className="p-12 text-center text-slate-400 text-xs font-bold">
+            <div className="p-12 text-center text-zinc-500 text-xs font-medium bg-zinc-900 border border-zinc-800 rounded-lg">
               Select a role to inspect its permissions.
             </div>
           )}

@@ -17,8 +17,10 @@ from ...models.plan import (
 )
 from ...models.asset import Asset
 from ...models.scenario import AuditLog
-from ...models.execution import Notification, ExecutionRecord, ExecutionStatus, ExecutionIssue
-from ...ml.criticality import get_explainable_priority
+from ...ml.criticality import get_explainable_priority, calculate_composite_criticality_index
+from ...ml.failure_prediction import predict_disruption_risk
+from ...services.planning.strategic_planner import StrategicPlanner
+from ...services.ingestion.unified_ingestion import UnifiedIngestionService
 from ...optimization.solver import RailwayBlockOptimizer
 from ...optimization.validators import PlanValidator
 from ...simulation.engine import DiscreteEventSimulator
@@ -1376,4 +1378,81 @@ def get_issue_plan_versions(task_id: int, db: Session = Depends(get_db)):
         "total_versions": len(versions),
         "versions": versions
     }
+
+class CCIRequest(BaseModel):
+    defect_severity: int = 7
+    defect_code: Optional[str] = "IMR"
+    rams_rcm_risk: Optional[float] = 0.82
+    days_overdue: int = 2
+    gmt_density: float = 68.5
+    safety_impact: Optional[int] = 9
+
+class DisruptionRiskRequest(BaseModel):
+    severity: int = 8
+    cci_score: int = 78
+    gmt_density: float = 68.5
+    days_overdue: int = 2
+    trains_per_hour: float = 6.0
+
+@router.get("/strategic/26-week")
+def get_strategic_26_week_program(corridor_id: int = 2):
+    """
+    Strategic Horizon (26-Week Rolling):
+    Returns heavy mechanized machine programs for track relaying (TRT),
+    ballast cleaning (BCM), continuous tamping (CSM), and OHE wire renewal.
+    """
+    return StrategicPlanner.generate_26_week_rolling_program(corridor_id=corridor_id)
+
+@router.post("/tactical/micro-tune")
+def tactical_micro_tune_blocks(corridor_id: int = 2, db: Session = Depends(get_db)):
+    """
+    Tactical Horizon:
+    Micro-tunes scheduled block windows against real-time COA train delay feeds
+    and dynamic freight forecasts.
+    """
+    blocks = db.query(BlockWindow).filter(BlockWindow.corridor_id == corridor_id).all()
+    block_dicts = [
+        {
+            "block_id": b.block_id,
+            "corridor_id": b.corridor_id,
+            "section_id": b.section_id,
+            "start_time": b.start_time.isoformat() if b.start_time else None,
+            "end_time": b.end_time.isoformat() if b.end_time else None,
+            "duration_minutes": b.duration_minutes,
+            "block_type": str(b.block_type)
+        }
+        for b in blocks
+    ]
+    delays = UnifiedIngestionService.get_live_train_delay_stream()
+    freight = UnifiedIngestionService.get_goods_train_forecast()
+    return StrategicPlanner.tactical_micro_tune(block_dicts, delays, freight)
+
+@router.post("/ml/composite-criticality")
+def compute_cci_score(req: CCIRequest):
+    """
+    AI/ML Engine: Computes the standard Indian Railways Composite Criticality Index (CCI)
+    with RAMS/RCM risk profile and GMT traffic density.
+    """
+    return calculate_composite_criticality_index(
+        defect_severity=req.defect_severity,
+        defect_code=req.defect_code,
+        rams_rcm_risk=req.rams_rcm_risk,
+        days_overdue=req.days_overdue,
+        gmt_density=req.gmt_density,
+        safety_impact=req.safety_impact
+    )
+
+@router.post("/ml/disruption-risk")
+def compute_disruption_risk(req: DisruptionRiskRequest):
+    """
+    Predictive Analytics: Estimates probability of operational service disruption (P_disruption)
+    if the maintenance block is deferred by 24h, 48h, or 7 days.
+    """
+    return predict_disruption_risk(
+        severity=req.severity,
+        cci_score=req.cci_score,
+        gmt_density=req.gmt_density,
+        days_overdue=req.days_overdue,
+        trains_per_hour=req.trains_per_hour
+    )
 

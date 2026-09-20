@@ -76,14 +76,19 @@ export const TaskDetail: React.FC = () => {
   }
 
   if (loading) {
-    return <div className="p-8 text-center text-xs text-slate-500">Loading maintenance request...</div>
+    return (
+      <div className="p-12 text-center text-xs text-zinc-400">
+        <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+        Loading maintenance request...
+      </div>
+    )
   }
 
   if (!task) {
     return (
       <div className="p-8 text-center space-y-3">
-        <h2 className="text-lg font-bold text-slate-800">Maintenance Request Not Found</h2>
-        <Link to="/tasks" className="text-xs font-bold text-blue-600">Back to Requests</Link>
+        <h2 className="text-base font-semibold text-zinc-100">Maintenance Request Not Found</h2>
+        <Link to="/tasks" className="text-xs font-medium text-blue-400 hover:underline">Back to Requests</Link>
       </div>
     )
   }
@@ -91,7 +96,7 @@ export const TaskDetail: React.FC = () => {
   const refNo = task.reference_no || `MR-2026-${String(task.task_id).padStart(5, '0')}`
   const statusStr = task.status || 'SUBMITTED'
 
-  // Step indices for Workflow Status Bar (Section 19)
+  // Step indices for Workflow Status Bar
   const steps = [
     { label: 'REPORT', key: 'SUBMITTED' },
     { label: 'AI PLAN', key: 'PLAN_PENDING_REVIEW' },
@@ -102,7 +107,7 @@ export const TaskDetail: React.FC = () => {
   ]
 
   const getStepIndex = (status: string) => {
-    if (status === 'COMPLETED') return 5
+    if (status === 'COMPLETED' || status === 'RESOLVED' || status === 'CLOSED') return 5
     if (status === 'IN_PROGRESS') return 4
     if (status === 'SCHEDULED' || status === 'APPROVED') return 3
     if (status === 'PLAN_PENDING_APPROVAL' || status === 'MANAGER_APPROVAL') return 2
@@ -113,79 +118,62 @@ export const TaskDetail: React.FC = () => {
   const currentStepIdx = getStepIndex(statusStr)
 
   return (
-    <div className="p-4 sm:p-6 space-y-6 max-w-5xl mx-auto">
-      {/* Top Header Card (Section 20) */}
-      <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-5xl mx-auto">
+      {/* Top Header Card */}
+      <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center space-x-3">
             <Link
               to="/tasks"
-              className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition-colors"
+              className="w-8 h-8 rounded-md bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center text-zinc-300 transition-colors"
             >
-              <ArrowLeft className="w-4 h-4" />
+              <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
             </Link>
             <div>
               <div className="flex items-center space-x-2.5">
-                <h1 className="text-xl font-black text-slate-900 tracking-tight">
+                <h1 className="text-xl sm:text-2xl font-semibold text-zinc-100 tracking-tight font-mono">
                   Maintenance Request {refNo}
                 </h1>
-                <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase border ${
-                  statusStr === 'COMPLETED'
-                    ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                <span className={`text-[10px] font-mono px-2.5 py-0.5 rounded uppercase border ${
+                  statusStr === 'COMPLETED' || statusStr === 'RESOLVED'
+                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                     : statusStr === 'IN_PROGRESS'
-                    ? 'bg-amber-100 text-amber-800 border-amber-300 animate-pulse'
-                    : 'bg-blue-100 text-blue-800 border-blue-300'
+                    ? 'bg-amber-500/10 text-amber-400 border-amber-500/20 animate-pulse'
+                    : 'bg-blue-500/10 text-blue-400 border-blue-500/20'
                 }`}>
                   {statusStr}
                 </span>
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
-                  (task.priority_score || 0) >= 80 ? 'bg-rose-100 text-rose-800' : 'bg-slate-100 text-slate-700'
-                }`}>
-                  Priority {task.priority_score || 75}/100 ({task.priority_level || 'HIGH'})
-                </span>
               </div>
-              <p className="text-xs text-slate-500 mt-1">
-                {task.department} • Asset: {task.asset_name || `Asset #${task.asset_id}`} • Location: {task.asset_location}
+              <p className="text-xs text-zinc-400 mt-1">
+                Reported {new Date(task.created_at || Date.now()).toLocaleDateString()} &bull; Corridor {task.corridor_id || 2}
               </p>
             </div>
           </div>
-
-          <div className="text-right sm:self-center">
-            <span className="text-[10px] text-slate-400 block font-bold uppercase">Reported At</span>
-            <span className="text-xs font-mono font-bold text-slate-700">
-              {task.reported_at ? new Date(task.reported_at).toLocaleString() : '15 Sep 2026 09:15'}
-            </span>
-          </div>
         </div>
 
-        {/* WORKFLOW STATUS BAR (Section 19) */}
-        <div className="pt-2 border-t border-slate-100">
-          <div className="flex items-center justify-between text-xs">
+        {/* Workflow Lifecycle Stepper */}
+        <div className="pt-3 border-t border-zinc-800">
+          <div className="flex items-center justify-between text-[11px] font-mono uppercase text-zinc-500 mb-2">
+            <span>Workflow Lifecycle Progress</span>
+            <span className="text-blue-400">Step {currentStepIdx + 1} of 6</span>
+          </div>
+
+          <div className="grid grid-cols-6 gap-2">
             {steps.map((s, idx) => {
-              const isDone = idx < currentStepIdx
+              const isPast = idx <= currentStepIdx
               const isCurrent = idx === currentStepIdx
               return (
-                <div key={s.label} className="flex-1 flex flex-col items-center relative">
-                  <div className="flex items-center w-full">
-                    {idx > 0 && (
-                      <div className={`h-1 flex-1 ${idx <= currentStepIdx ? 'bg-emerald-500' : 'bg-slate-200'}`} />
-                    )}
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs ${
-                      isDone
-                        ? 'bg-emerald-600 text-white'
-                        : isCurrent
-                        ? 'bg-blue-600 text-white ring-4 ring-blue-100'
-                        : 'bg-slate-200 text-slate-500'
-                    }`}>
-                      {isDone ? '✓' : isCurrent ? '●' : '○'}
-                    </div>
-                    {idx < steps.length - 1 && (
-                      <div className={`h-1 flex-1 ${idx < currentStepIdx ? 'bg-emerald-500' : 'bg-slate-200'}`} />
-                    )}
-                  </div>
-                  <span className={`text-[10px] font-bold mt-1.5 uppercase ${
-                    isCurrent ? 'text-blue-700' : isDone ? 'text-emerald-800' : 'text-slate-400'
-                  }`}>
+                <div key={s.key} className="space-y-1">
+                  <div
+                    className={`h-1.5 rounded-full transition-colors ${
+                      isCurrent
+                        ? 'bg-blue-500'
+                        : isPast
+                        ? 'bg-emerald-400'
+                        : 'bg-zinc-800'
+                    }`}
+                  />
+                  <span className={`text-[9px] font-mono block text-center truncate ${isCurrent ? 'text-blue-400 font-semibold' : isPast ? 'text-zinc-300' : 'text-zinc-600'}`}>
                     {s.label}
                   </span>
                 </div>
@@ -195,97 +183,98 @@ export const TaskDetail: React.FC = () => {
         </div>
       </div>
 
-      {/* CURRENT PLAN SECTION (Section 20 & 45) */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-3">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+      {/* CURRENT PLAN SECTION */}
+      <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-6 space-y-3">
+        <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
           <div>
-            <h3 className="font-extrabold text-sm text-slate-900 uppercase">CURRENT ATTACHED PLAN</h3>
-            <p className="text-xs text-slate-500">Coordinated possession plan linked directly to this request</p>
+            <h3 className="font-mono text-xs uppercase tracking-wider text-zinc-200">Current Attached Plan</h3>
+            <p className="text-xs text-zinc-400 mt-0.5">Coordinated possession plan linked directly to this request</p>
           </div>
           {task.current_plan && (
-            <span className="text-[10px] font-bold bg-slate-900 text-white px-2 py-0.5 rounded">
+            <span className="text-[10px] font-mono bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded border border-zinc-700">
               v{task.current_plan.version || 1}
             </span>
           )}
         </div>
 
         {task.current_plan ? (
-          <div className="p-4 rounded-xl bg-blue-50/70 border border-blue-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="p-4 rounded-md bg-zinc-950/60 border border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="space-y-1">
               <div className="flex items-center space-x-2">
-                <span className="font-black text-sm text-blue-950">
+                <span className="font-mono font-medium text-sm text-blue-400">
                   {task.current_plan.plan_number || `PLAN-2026-${task.current_plan.plan_id}`} (Version {task.current_plan.version || 1})
                 </span>
-                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded bg-blue-100 text-blue-800 uppercase">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 uppercase">
                   {task.current_plan.status}
                 </span>
               </div>
-              <p className="text-xs text-blue-900">
-                Scheduled Window: <strong>14:00 – 16:30</strong> (2.5 hours multi-department coordinated block)
+              <p className="text-xs text-zinc-300">
+                Scheduled Window: <strong className="font-mono text-zinc-100">14:00 – 16:30</strong> (2.5 hours multi-department coordinated block)
               </p>
             </div>
 
             <Link
               to={`/plans/${task.current_plan.plan_id}`}
-              className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center space-x-1.5 shadow-xs shrink-0 self-end sm:self-center"
+              className="px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs flex items-center space-x-1.5 shadow-sm shrink-0 self-end sm:self-center transition-colors"
             >
-              <span>VIEW PLAN</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <span>View Plan</span>
+              <ArrowRight className="w-3.5 h-3.5" strokeWidth={1.5} />
             </Link>
           </div>
         ) : (
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="p-4 rounded-md bg-zinc-950/60 border border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h4 className="font-extrabold text-xs text-slate-900">No Plan Generated Yet</h4>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <h4 className="font-medium text-xs text-zinc-200">No Plan Generated Yet</h4>
+              <p className="text-xs text-zinc-400 mt-0.5">
                 Run the Google OR-Tools CP-SAT engine to find optimal multi-crew windows and link this request.
               </p>
             </div>
             <button
               onClick={handleGeneratePlan}
               disabled={generatingPlan}
-              className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center space-x-1.5 shadow-xs shrink-0"
+              className="px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs flex items-center space-x-1.5 shadow-sm shrink-0 transition-colors"
             >
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              <span>{generatingPlan ? 'Generating Plan...' : 'GENERATE AI PLAN'}</span>
+              <Sparkles className="w-3.5 h-3.5 text-white" strokeWidth={1.5} />
+              <span>{generatingPlan ? 'Generating Plan...' : 'Generate AI Plan'}</span>
             </button>
           </div>
         )}
       </div>
 
-      {/* ONE REQUEST TRACE (Section 55) */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+      {/* ONE REQUEST TRACE */}
+      <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-6 space-y-4">
+        <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
           <div>
-            <h3 className="font-extrabold text-sm text-slate-900 uppercase">REQUEST AUDIT TRACE</h3>
-            <p className="text-xs text-slate-500">Immutable database-recorded lifecycle events with actual timestamps</p>
+            <h3 className="font-mono text-xs uppercase tracking-wider text-zinc-200">Request Audit Trace</h3>
+            <p className="text-xs text-zinc-400 mt-0.5">Immutable database-recorded lifecycle events with actual timestamps</p>
           </div>
-          <History className="w-4 h-4 text-slate-400" />
+          <History className="w-4 h-4 text-blue-400" strokeWidth={1.5} />
         </div>
 
-        <div className="relative pl-6 space-y-4 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
+        <div className="relative pl-6 space-y-4 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-px before:bg-zinc-800">
           {trace && trace.length > 0 ? (
             trace.map((tr: any, idx: number) => (
               <div key={idx} className="relative group text-xs">
-                <div className="absolute -left-[23px] top-0.5 w-3 h-3 rounded-full bg-slate-400 border-2 border-white group-hover:bg-blue-600 transition-colors" />
+                <div className="absolute -left-[23px] top-0.5 w-2.5 h-2.5 rounded-full bg-zinc-600 group-hover:bg-blue-500 transition-colors" />
                 <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
-                  <div className="font-bold text-slate-900 flex items-center space-x-2">
-                    <span className="font-mono text-slate-500 text-[11px] font-normal">{tr.time}</span>
+                  <div className="font-medium text-zinc-200 flex items-center space-x-2">
+                    <span className="font-mono text-zinc-500 text-[11px] font-normal">{tr.time}</span>
                     <span>{tr.action}</span>
                   </div>
-                  <span className="text-[10px] font-mono text-slate-400">{tr.status}</span>
+                  <span className="text-[10px] font-mono text-zinc-500 uppercase">{tr.status}</span>
                 </div>
                 {tr.detail && (
-                  <p className="text-[11px] text-slate-500 mt-0.5 pl-9">{tr.detail}</p>
+                  <p className="text-[11px] text-zinc-400 mt-0.5 pl-9">{tr.detail}</p>
                 )}
               </div>
             ))
           ) : (
-            <div className="text-xs text-slate-400 italic">No trace history recorded yet.</div>
+            <div className="text-xs text-zinc-500 italic">No trace history recorded yet.</div>
           )}
         </div>
       </div>
     </div>
   )
 }
+
 export default TaskDetail

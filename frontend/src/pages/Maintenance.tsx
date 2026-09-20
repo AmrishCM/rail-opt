@@ -1,18 +1,11 @@
 import React, { useEffect, useState } from 'react'
-import { fetchTasks, createTask, fetchAssets } from '../services/api'
+import { fetchTasks, createTask } from '../services/api'
 import { CriticalityBreakdownModal } from '../components/tasks/CriticalityBreakdownModal'
 import {
-  Wrench,
   Search,
-  Filter,
   Plus,
-  AlertTriangle,
-  Activity,
-  CheckCircle2,
-  Clock,
   ChevronRight,
-  ShieldAlert,
-  Gauge
+  X
 } from 'lucide-react'
 
 export const Maintenance: React.FC = () => {
@@ -85,42 +78,42 @@ export const Maintenance: React.FC = () => {
   )
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 max-w-7xl mx-auto">
       {/* Top Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-zinc-900 p-5 rounded-lg border border-zinc-800">
         <div>
           <div className="flex items-center space-x-2">
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+            <h1 className="text-xl font-semibold text-zinc-100 tracking-tight">
               Maintenance Defect Backlog
             </h1>
-            <span className="text-xs font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-800 border border-blue-200">
+            <span className="text-xs font-mono px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">
               {tasks.length} DEFECTS
             </span>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-zinc-400 mt-1">
             Prioritized asset defects with ML-assisted failure prediction and explainable criticality scores.
           </p>
         </div>
 
         <button
           onClick={() => setCreateModalOpen(true)}
-          className="flex items-center space-x-2 px-4 py-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-sm transition-all"
+          className="flex items-center space-x-2 px-4 py-2.5 rounded bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors"
         >
           <Plus className="w-4 h-4" />
-          <span>Report New Defect</span>
+          <span>Report new defect</span>
         </button>
       </div>
 
       {/* Filter Bar */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center gap-3">
+      <div className="bg-zinc-900 p-4 rounded-lg border border-zinc-800 flex flex-col sm:flex-row items-center gap-3">
         <div className="relative flex-1 w-full">
-          <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+          <Search className="w-4 h-4 absolute left-3 top-2.5 text-zinc-500" />
           <input
             type="text"
             placeholder="Search defects by description, location, or component..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-xs rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-hidden"
+            className="w-full pl-9 pr-4 py-2 text-xs rounded border border-zinc-700 bg-zinc-950 text-zinc-200 placeholder-zinc-600 font-mono outline-none focus:border-blue-500"
           />
         </div>
 
@@ -128,32 +121,32 @@ export const Maintenance: React.FC = () => {
           <select
             value={selectedDept}
             onChange={(e) => setSelectedDept(e.target.value)}
-            className="text-xs font-semibold p-2 rounded-lg border border-slate-200 bg-white text-slate-700 outline-hidden"
+            className="text-xs font-mono p-2 rounded border border-zinc-700 bg-zinc-950 text-zinc-200 outline-none focus:border-blue-500"
           >
-            <option value="">All Departments</option>
-            <option value="Engineering/Track">Engineering/Track</option>
-            <option value="S&T/Signalling">S&T/Signalling</option>
-            <option value="Traction Distribution">Traction Distribution</option>
-            <option value="Telecommunication">Telecommunication</option>
+            <option value="" className="bg-zinc-900">All Departments</option>
+            <option value="Engineering/Track" className="bg-zinc-900">Engineering/Track</option>
+            <option value="S&T/Signalling" className="bg-zinc-900">S&T/Signalling</option>
+            <option value="Traction Distribution" className="bg-zinc-900">Traction Distribution</option>
+            <option value="Telecommunication" className="bg-zinc-900">Telecommunication</option>
           </select>
 
           <select
             value={selectedSeverity}
             onChange={(e) => setSelectedSeverity(e.target.value)}
-            className="text-xs font-semibold p-2 rounded-lg border border-slate-200 bg-white text-slate-700 outline-hidden"
+            className="text-xs font-mono p-2 rounded border border-zinc-700 bg-zinc-950 text-zinc-200 outline-none focus:border-blue-500"
           >
-            <option value="">All Severities</option>
-            <option value="8">Severity &ge; 8 (High)</option>
-            <option value="6">Severity &ge; 6 (Medium)</option>
+            <option value="" className="bg-zinc-900">All Severities</option>
+            <option value="8" className="bg-zinc-900">Severity ≥ 8 (High)</option>
+            <option value="6" className="bg-zinc-900">Severity ≥ 6 (Medium)</option>
           </select>
         </div>
       </div>
 
       {/* Tasks Table */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-zinc-900 rounded-lg border border-zinc-800 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-100/70 border-b border-slate-200 text-slate-600 font-bold uppercase text-[10px]">
+          <table className="w-full text-left text-xs font-mono">
+            <thead className="bg-zinc-950/60 border-b border-zinc-800 text-zinc-500 uppercase text-[10px]">
               <tr>
                 <th className="py-3 px-4">Task ID</th>
                 <th className="py-3 px-4">Department</th>
@@ -165,44 +158,39 @@ export const Maintenance: React.FC = () => {
                 <th className="py-3 px-4 text-right">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-zinc-800">
               {filteredTasks.map((t) => {
                 const score = t.priority_score || 50
-                const isCritical = score >= 80 || t.safety_impact >= 8
                 return (
-                  <tr key={t.task_id} className="hover:bg-slate-50 transition-colors">
-                    <td className="py-3.5 px-4 font-mono font-extrabold text-slate-900">
-                      T-{t.task_id}
-                    </td>
-                    <td className="py-3.5 px-4 font-semibold text-slate-700">
-                      {t.department}
-                    </td>
+                  <tr key={t.task_id} className="hover:bg-zinc-800/30 transition-colors">
+                    <td className="py-3.5 px-4 text-zinc-200">T-{t.task_id}</td>
+                    <td className="py-3.5 px-4 text-zinc-400">{t.department}</td>
                     <td className="py-3.5 px-4 max-w-sm">
-                      <span className="font-semibold text-slate-900 block truncate">{t.description}</span>
-                      <span className="text-[10px] text-slate-400 font-medium">Type: {t.defect_type || 'Defect'}</span>
+                      <span className="text-zinc-200 block truncate">{t.description}</span>
+                      <span className="text-[10px] text-zinc-600">Type: {t.defect_type || 'Defect'}</span>
                     </td>
-                    <td className="py-3.5 px-4 text-slate-600 font-medium truncate max-w-xs">
-                      {t.asset_location || 'Corridor C1'}
-                    </td>
+                    <td className="py-3.5 px-4 text-zinc-500 truncate max-w-xs">{t.asset_location || 'Corridor C1'}</td>
                     <td className="py-3.5 px-4">
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${
+                      <span className={`text-[10px] px-2 py-0.5 rounded border ${
                         t.safety_impact >= 8
-                          ? 'bg-rose-50 text-rose-700 border-rose-200'
-                          : (t.safety_impact >= 5 ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-slate-100 text-slate-600 border-slate-200')
+                          ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                          : t.safety_impact >= 5
+                          ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                          : 'bg-zinc-800 text-zinc-400 border-zinc-700'
                       }`}>
                         {t.safety_impact}/10
                       </span>
                     </td>
-                    <td className="py-3.5 px-4 text-slate-600 font-medium">
-                      {t.estimated_duration} min
-                    </td>
+                    <td className="py-3.5 px-4 text-zinc-500">{t.estimated_duration} min</td>
                     <td className="py-3.5 px-4 text-center">
                       <button
                         onClick={() => handleOpenBreakdown(t)}
-                        className={`px-3 py-1 rounded-full text-xs font-extrabold border transition-all inline-flex items-center space-x-1 ${
+                        className={`px-3 py-1 rounded text-xs font-mono border transition-colors inline-flex items-center space-x-1 ${
                           score >= 80
-                            ? 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100'
-                            : (score >= 60 ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' : 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100')
+                            ? 'bg-rose-500/10 text-rose-400 border-rose-500/20 hover:bg-rose-500/20'
+                            : score >= 60
+                            ? 'bg-amber-500/10 text-amber-400 border-amber-500/20 hover:bg-amber-500/20'
+                            : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20'
                         }`}
                       >
                         <span>{score}/100</span>
@@ -212,7 +200,7 @@ export const Maintenance: React.FC = () => {
                     <td className="py-3.5 px-4 text-right">
                       <button
                         onClick={() => handleOpenBreakdown(t)}
-                        className="text-xs font-bold text-blue-600 hover:text-blue-800"
+                        className="text-xs font-mono text-blue-400 hover:underline"
                       >
                         Inspect
                       </button>
@@ -234,92 +222,81 @@ export const Maintenance: React.FC = () => {
 
       {/* Report Defect Modal */}
       {createModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-md p-6 space-y-4">
-            <h3 className="text-base font-extrabold text-slate-900">Report Railway Asset Defect</h3>
-            <form onSubmit={handleCreateTask} className="space-y-3 text-xs">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-zinc-900 rounded-lg border border-zinc-800 shadow-2xl w-full max-w-md p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-medium text-zinc-100">Report Railway Asset Defect</h3>
+              <button onClick={() => setCreateModalOpen(false)} className="text-zinc-500 hover:text-zinc-200">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <form onSubmit={handleCreateTask} className="space-y-3 text-xs font-mono">
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Defect Description</label>
+                <label className="text-zinc-400 block mb-1">Defect Description</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Ultrasonic rail flaw detected on section..."
                   value={newDesc}
                   onChange={(e) => setNewDesc(e.target.value)}
-                  className="w-full p-2.5 rounded-lg border border-slate-200 text-xs outline-hidden focus:ring-2 focus:ring-blue-500"
+                  className="w-full p-2.5 rounded border border-zinc-700 bg-zinc-950 text-zinc-200 text-xs outline-none focus:border-blue-500 placeholder-zinc-600"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Department</label>
+                  <label className="text-zinc-400 block mb-1">Department</label>
                   <select
                     value={newDept}
                     onChange={(e) => setNewDept(e.target.value)}
-                    className="w-full p-2.5 rounded-lg border border-slate-200 text-xs outline-hidden"
+                    className="w-full p-2.5 rounded border border-zinc-700 bg-zinc-950 text-zinc-200 text-xs outline-none focus:border-blue-500"
                   >
-                    <option value="Engineering/Track">Engineering/Track</option>
-                    <option value="S&T/Signalling">S&T/Signalling</option>
-                    <option value="Traction Distribution">Traction Distribution</option>
-                    <option value="Telecommunication">Telecommunication</option>
+                    <option value="Engineering/Track" className="bg-zinc-900">Engineering/Track</option>
+                    <option value="S&T/Signalling" className="bg-zinc-900">S&T/Signalling</option>
+                    <option value="Traction Distribution" className="bg-zinc-900">Traction Distribution</option>
+                    <option value="Telecommunication" className="bg-zinc-900">Telecommunication</option>
                   </select>
                 </div>
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Asset ID</label>
+                  <label className="text-zinc-400 block mb-1">Asset ID</label>
                   <input
                     type="number"
                     value={newAssetId}
                     onChange={(e) => setNewAssetId(Number(e.target.value))}
-                    className="w-full p-2.5 rounded-lg border border-slate-200 text-xs outline-hidden"
+                    className="w-full p-2.5 rounded border border-zinc-700 bg-zinc-950 text-zinc-200 text-xs outline-none focus:border-blue-500"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Severity (1-10)</label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="10"
-                    value={newSeverity}
-                    onChange={(e) => setNewSeverity(Number(e.target.value))}
-                    className="w-full p-2 rounded-lg border border-slate-200 text-xs"
-                  />
+                  <label className="text-zinc-400 block mb-1">Severity (1-10)</label>
+                  <input type="number" min="1" max="10" value={newSeverity} onChange={(e) => setNewSeverity(Number(e.target.value))}
+                    className="w-full p-2 rounded border border-zinc-700 bg-zinc-950 text-zinc-200 text-xs outline-none focus:border-blue-500" />
                 </div>
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Safety (1-10)</label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="10"
-                    value={newSafety}
-                    onChange={(e) => setNewSafety(Number(e.target.value))}
-                    className="w-full p-2 rounded-lg border border-slate-200 text-xs"
-                  />
+                  <label className="text-zinc-400 block mb-1">Safety (1-10)</label>
+                  <input type="number" min="1" max="10" value={newSafety} onChange={(e) => setNewSafety(Number(e.target.value))}
+                    className="w-full p-2 rounded border border-zinc-700 bg-zinc-950 text-zinc-200 text-xs outline-none focus:border-blue-500" />
                 </div>
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Duration (min)</label>
-                  <input
-                    type="number"
-                    value={newDuration}
-                    onChange={(e) => setNewDuration(Number(e.target.value))}
-                    className="w-full p-2 rounded-lg border border-slate-200 text-xs"
-                  />
+                  <label className="text-zinc-400 block mb-1">Duration (min)</label>
+                  <input type="number" value={newDuration} onChange={(e) => setNewDuration(Number(e.target.value))}
+                    className="w-full p-2 rounded border border-zinc-700 bg-zinc-950 text-zinc-200 text-xs outline-none focus:border-blue-500" />
                 </div>
               </div>
 
-              <div className="flex justify-end space-x-2 pt-3 border-t border-slate-100">
+              <div className="flex justify-end space-x-2 pt-3 border-t border-zinc-800">
                 <button
                   type="button"
                   onClick={() => setCreateModalOpen(false)}
-                  className="px-4 py-2 rounded-lg border border-slate-200 text-slate-600 font-bold hover:bg-slate-50"
+                  className="px-4 py-2 rounded border border-zinc-700 text-zinc-400 hover:bg-zinc-800 text-xs transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold"
+                  className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors"
                 >
                   Save & Prioritize
                 </button>

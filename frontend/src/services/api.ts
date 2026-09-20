@@ -388,3 +388,91 @@ export async function triggerReplan(payload: { plan_id: number; event: any }) {
   const res = await api.post('/replan', payload)
   return res.data
 }
+
+// Ingestion & Connectors
+export async function fetchConnectorsStatus() {
+  const res = await api.get('/ingestion/connectors')
+  return res.data
+}
+
+export async function triggerUnifiedSync(corridorId: number = 2) {
+  const res = await api.post('/ingestion/sync', null, { params: { corridor_id: corridorId } })
+  return res.data
+}
+
+export async function fetchHarmonizedDefects(corridorId: number = 2) {
+  const res = await api.get('/ingestion/harmonized-defects', { params: { corridor_id: corridorId } })
+  return res.data
+}
+
+export async function fetchSpatialClusters(corridorId: number = 2) {
+  const res = await api.get('/ingestion/spatial-clusters', { params: { corridor_id: corridorId } })
+  return res.data
+}
+
+export async function fetchLiveFeeds() {
+  const res = await api.get('/ingestion/live-feeds')
+  return res.data
+}
+
+// Strategic & Tactical Planning
+export async function fetchStrategic26WeekProgram(corridorId: number = 2) {
+  const res = await api.get('/planning/strategic/26-week', { params: { corridor_id: corridorId } })
+  return res.data
+}
+
+export async function triggerTacticalMicroTune(corridorId: number = 2) {
+  const res = await api.post('/planning/tactical/micro-tune', null, { params: { corridor_id: corridorId } })
+  return res.data
+}
+
+// Section Officers Concurrence & Authorities
+export async function fetchSectionOfficers() {
+  const res = await api.get('/authorities/section-officers')
+  return res.data
+}
+
+export async function fetchPlanConcurrenceStatus(planId: number) {
+  const res = await api.get(`/authorities/plan/${planId}/concurrence-status`)
+  return res.data
+}
+
+export async function submitSectionOfficerConcurrence(payload: {
+  plan_id: number
+  officer_role: string
+  officer_name: string
+  decision: string
+  comments?: string
+}) {
+  const res = await api.post('/authorities/concurrence', payload)
+  return res.data
+}
+
+export async function grantPossessionByChiefController(planId: number) {
+  const res = await api.post('/authorities/possession-grant', null, { params: { plan_id: planId } })
+  return res.data
+}
+
+// ML Prioritization & Disruption
+export async function computeCCIScore(payload: {
+  defect_severity: number
+  defect_code?: string
+  rams_rcm_risk?: number
+  days_overdue: number
+  gmt_density: number
+  safety_impact?: number
+}) {
+  const res = await api.post('/planning/ml/composite-criticality', payload)
+  return res.data
+}
+
+export async function computeDisruptionRisk(payload: {
+  severity: number
+  cci_score: number
+  gmt_density: number
+  days_overdue: number
+  trains_per_hour: number
+}) {
+  const res = await api.post('/planning/ml/disruption-risk', payload)
+  return res.data
+}
