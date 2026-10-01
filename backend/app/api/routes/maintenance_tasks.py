@@ -109,6 +109,7 @@ def _format_task_dict(t: MaintenanceTask) -> dict:
         "current_status": status_str,
         "current_plan_id": t.current_plan_id,
         "current_plan": current_plan_info,
+        "assignment_id": t.plan_assignments[0].assignment_id if (hasattr(t, "plan_assignments") and t.plan_assignments) else None,
         "breakdown": crit_breakdown,
         "created_at": t.created_at.isoformat() if t.created_at else None,
         "updated_at": t.updated_at.isoformat() if t.updated_at else (t.created_at.isoformat() if t.created_at else None)
