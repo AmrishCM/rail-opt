@@ -102,17 +102,17 @@ export const RoleDashboard: React.FC = () => {
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto">
       {/* Top System Health & Live DB Status Bar (Section 3 & 25) */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white px-5 py-3 rounded-2xl border border-slate-200 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900 px-5 py-3 rounded-2xl border border-slate-800 shadow-xs">
         <div className="flex items-center space-x-3 text-xs">
           <div className="flex items-center space-x-1.5 font-bold">
-            <Database className="w-4 h-4 text-slate-700" />
-            <span className="text-slate-900">Database:</span>
+            <Database className="w-4 h-4 text-slate-400" />
+            <span className="text-white">Database:</span>
           </div>
           {dbHealth?.connected ? (
             <span className={`inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full font-extrabold text-[11px] ${
               dbHealth?.type === 'postgresql'
-                ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                : 'bg-amber-100 text-amber-800 border border-amber-300'
+                ? 'bg-emerald-950/60 text-emerald-300 border border-emerald-500/40'
+                : 'bg-amber-950/60 text-amber-300 border border-amber-500/40'
             }`}>
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse inline-block"></span>
               <span>
@@ -121,20 +121,20 @@ export const RoleDashboard: React.FC = () => {
               <span className="text-[10px] opacity-75">({dbHealth?.latency_ms || 3}ms)</span>
             </span>
           ) : (
-            <span className="px-2.5 py-0.5 rounded-full font-bold text-[11px] bg-rose-100 text-rose-800">
+            <span className="px-2.5 py-0.5 rounded-full font-bold text-[11px] bg-rose-950 text-rose-300 border border-rose-500/40">
               ● Disconnected
             </span>
           )}
         </div>
 
         <div className="flex items-center space-x-4 text-xs">
-          <span className="text-slate-500 font-medium">
-            Last database update: <strong className="text-slate-800 font-bold">{lastUpdatedStr}</strong>
+          <span className="text-slate-400 font-medium">
+            Last database update: <strong className="text-white font-bold">{lastUpdatedStr}</strong>
           </span>
           <button
             onClick={loadDashboardData}
             title="Refetch database state"
-            className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
           </button>
@@ -144,7 +144,7 @@ export const RoleDashboard: React.FC = () => {
       {/* 4 CORE PERSISTENT WORKFLOW CARDS (Section 43) */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <h2 className="text-xs font-black text-slate-500 uppercase tracking-wider">
+          <h2 className="text-xs font-black text-slate-400 uppercase tracking-wider">
             RAILOPT-AI CORE WORKFLOW PIPELINE
           </h2>
           <span className="text-[11px] text-slate-400 font-medium">Step-by-step persistent railway lifecycle</span>
@@ -152,32 +152,32 @@ export const RoleDashboard: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Card 1: Report & Plan */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between hover:border-sky-400 transition-all">
+          <div className="bg-slate-900 rounded-2xl border border-slate-800 p-5 shadow-xs flex flex-col justify-between hover:border-sky-400 transition-all">
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-black text-sky-600 bg-sky-50 px-2 py-0.5 rounded">
+                <span className="text-xs font-black text-sky-400 bg-sky-950/60 border border-sky-500/30 px-2 py-0.5 rounded">
                   STEP 1
                 </span>
-                <span className="text-[11px] font-bold text-slate-500">
+                <span className="text-[11px] font-bold text-slate-400">
                   {tasks.length} requests total
                 </span>
               </div>
-              <h3 className="font-extrabold text-sm text-slate-900">Report & Plan</h3>
-              <p className="text-xs text-slate-500 mt-1">
+              <h3 className="font-extrabold text-sm text-white">Report & Plan</h3>
+              <p className="text-xs text-slate-400 mt-1">
                 {requestsNeedingAttention.length} requests need attention or plan generation.
               </p>
             </div>
-            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+            <div className="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between">
               <Link
                 to="/maintenance/new"
-                className="text-xs font-bold text-sky-700 hover:text-sky-900 flex items-center space-x-1"
+                className="text-xs font-bold text-sky-400 hover:text-sky-300 flex items-center space-x-1"
               >
                 <PlusCircle className="w-3.5 h-3.5" />
                 <span>Report Defect</span>
               </Link>
               <Link
                 to="/tasks"
-                className="px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-xs"
+                className="px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs shadow-xs"
               >
                 OPEN
               </Link>
@@ -185,28 +185,28 @@ export const RoleDashboard: React.FC = () => {
           </div>
 
           {/* Card 2: Review & Approve */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between hover:border-indigo-400 transition-all">
+          <div className="bg-slate-900 rounded-2xl border border-slate-800 p-5 shadow-xs flex flex-col justify-between hover:border-indigo-400 transition-all">
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
+                <span className="text-xs font-black text-indigo-400 bg-indigo-950/60 border border-indigo-500/30 px-2 py-0.5 rounded">
                   STEP 2
                 </span>
-                <span className="text-[11px] font-bold text-slate-500">
+                <span className="text-[11px] font-bold text-slate-400">
                   {plans.length} plans total
                 </span>
               </div>
-              <h3 className="font-extrabold text-sm text-slate-900">Review & Approve</h3>
-              <p className="text-xs text-slate-500 mt-1">
+              <h3 className="font-extrabold text-sm text-white">Review & Approve</h3>
+              <p className="text-xs text-slate-400 mt-1">
                 {plansAwaitingApproval.length} plan(s) awaiting managerial review and corridor possession sign-off.
               </p>
             </div>
-            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-500">
+            <div className="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-400">
                 {plansAwaitingApproval[0] ? `Plan #${plansAwaitingApproval[0].plan_id}` : 'All caught up'}
               </span>
               <Link
                 to={plansAwaitingApproval[0] ? `/plans/${plansAwaitingApproval[0].plan_id}` : '/planner'}
-                className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-xs"
+                className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-xs"
               >
                 OPEN
               </Link>
@@ -214,28 +214,28 @@ export const RoleDashboard: React.FC = () => {
           </div>
 
           {/* Card 3: Execute Field Work */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between hover:border-emerald-400 transition-all">
+          <div className="bg-slate-900 rounded-2xl border border-slate-800 p-5 shadow-xs flex flex-col justify-between hover:border-emerald-400 transition-all">
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
+                <span className="text-xs font-black text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-2 py-0.5 rounded">
                   STEP 3
                 </span>
-                <span className="text-[11px] font-bold text-slate-500">
+                <span className="text-[11px] font-bold text-slate-400">
                   Section C2-02
                 </span>
               </div>
-              <h3 className="font-extrabold text-sm text-slate-900">Execute Field Work</h3>
-              <p className="text-xs text-slate-500 mt-1">
+              <h3 className="font-extrabold text-sm text-white">Execute Field Work</h3>
+              <p className="text-xs text-slate-400 mt-1">
                 {scheduledFieldWork.length} maintenance tasks scheduled today for field gang execution.
               </p>
             </div>
-            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-              <span className="text-xs font-bold text-emerald-700">
+            <div className="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between">
+              <span className="text-xs font-bold text-emerald-400">
                 14:00 – 16:30 Possession
               </span>
               <Link
                 to="/execution"
-                className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs"
+                className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-xs"
               >
                 OPEN
               </Link>
@@ -245,18 +245,18 @@ export const RoleDashboard: React.FC = () => {
           {/* Card 4: Critical Events & Re-Plan (Section 18 & 43) */}
           <div className={`rounded-2xl border p-5 shadow-xs flex flex-col justify-between transition-all ${
             activeCriticalEvents.length > 0
-              ? 'bg-rose-50/60 border-rose-300 ring-2 ring-rose-300/40'
-              : 'bg-white border-slate-200 hover:border-rose-300'
+              ? 'bg-rose-950/40 border-rose-500/50 ring-2 ring-rose-500/30'
+              : 'bg-slate-900 border-slate-800 hover:border-rose-400'
           }`}>
             <div>
               <div className="flex items-center justify-between mb-2">
                 <span className={`text-xs font-black px-2 py-0.5 rounded ${
-                  activeCriticalEvents.length > 0 ? 'bg-rose-200 text-rose-900' : 'bg-slate-100 text-slate-700'
+                  activeCriticalEvents.length > 0 ? 'bg-rose-900/60 text-rose-300 border border-rose-500/40' : 'bg-slate-800 text-slate-300'
                 }`}>
                   STEP 4
                 </span>
                 {activeCriticalEvents.length > 0 ? (
-                  <span className="text-[10px] font-extrabold text-rose-800 animate-pulse">
+                  <span className="text-[10px] font-extrabold text-rose-400 animate-pulse">
                     ⚠ REPLAN REQUIRED
                   </span>
                 ) : (
@@ -265,17 +265,17 @@ export const RoleDashboard: React.FC = () => {
                   </span>
                 )}
               </div>
-              <h3 className="font-extrabold text-sm text-slate-900">Report Critical Defect & Re-Plan</h3>
-              <p className="text-xs text-slate-600 mt-1">
+              <h3 className="font-extrabold text-sm text-white">Report Critical Defect & Re-Plan</h3>
+              <p className="text-xs text-slate-400 mt-1">
                 {activeCriticalEvents.length > 0
                   ? `${activeCriticalEvents.length} critical defect(s) require automated CP-SAT replanning.`
                   : 'For unexpected urgent track, signal, or OHE failure events.'}
               </p>
             </div>
-            <div className="mt-4 pt-3 border-t border-slate-200/80 flex items-center justify-between gap-2">
+            <div className="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between gap-2">
               <button
                 onClick={() => setIsEmergencyModalOpen(true)}
-                className="w-full px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-xs flex items-center justify-center space-x-1.5"
+                className="w-full px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-500 text-white font-bold text-xs shadow-xs flex items-center justify-center space-x-1.5"
               >
                 <AlertOctagon className="w-3.5 h-3.5" />
                 <span>{activeCriticalEvents.length > 0 ? 'VIEW IMPACT & REPLAN' : 'REPORT CRITICAL DEFECT'}</span>
@@ -286,22 +286,22 @@ export const RoleDashboard: React.FC = () => {
       </div>
 
       {/* "ACTION REQUIRED" (What do I need to do now? - Section 44) */}
-      <div className="bg-white rounded-2xl border-2 border-amber-400/40 p-5 shadow-sm bg-gradient-to-br from-white to-amber-50/20 space-y-3">
-        <div className="flex items-center justify-between pb-3 border-b border-amber-100">
+      <div className="bg-slate-900 rounded-2xl border-2 border-amber-500/40 p-5 shadow-sm bg-gradient-to-br from-slate-900 to-amber-950/20 space-y-3">
+        <div className="flex items-center justify-between pb-3 border-b border-amber-500/30">
           <div className="flex items-center space-x-2.5">
-            <div className="w-8 h-8 rounded-lg bg-amber-500 text-white flex items-center justify-center font-black">
+            <div className="w-8 h-8 rounded-lg bg-amber-500 text-slate-950 flex items-center justify-center font-black">
               !
             </div>
             <div>
-              <h2 className="text-base font-black text-slate-900 tracking-tight uppercase">
+              <h2 className="text-base font-black text-white tracking-tight uppercase">
                 ACTION REQUIRED TODAY
               </h2>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-400">
                 Prioritized items requiring your immediate attention based on role ({role.replace(/_/g, ' ')})
               </p>
             </div>
           </div>
-          <span className="text-[10px] font-extrabold uppercase bg-amber-100 text-amber-900 px-2.5 py-1 rounded-full border border-amber-200">
+          <span className="text-[10px] font-extrabold uppercase bg-amber-950/60 text-amber-300 px-2.5 py-1 rounded-full border border-amber-500/40">
             Immediate Response
           </span>
         </div>
@@ -309,7 +309,7 @@ export const RoleDashboard: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
           {/* Action 1: Approve Plan */}
           {plansAwaitingApproval.length > 0 && (
-            <div className="p-4 rounded-xl bg-blue-50 border border-blue-200 flex flex-col justify-between">
+            <div className="p-4 rounded-xl bg-blue-950/40 border border-blue-500/30 flex flex-col justify-between">
               <div>
                 <span className="text-[10px] font-black uppercase text-blue-700">PLAN APPROVAL REQUIRED</span>
                 <h3 className="font-extrabold text-sm text-slate-900 mt-1">

@@ -27,14 +27,15 @@ class MaintenanceClusteringEngine:
         # Normalize tasks to standardized spatial objects
         spatial_tasks = []
         for t in tasks:
-            t_id = getattr(t, "task_id", None) or t.get("task_id") or t.get("id")
-            dept = getattr(t, "department", None) or t.get("department", "Track")
-            corr_id = getattr(t, "corridor_id", None) or (getattr(getattr(t, "asset", None), "corridor_id", 2) if hasattr(t, "asset") else 2)
-            sec_id = getattr(t, "section_id", None) or 2
-            dur = getattr(t, "estimated_duration", None) or t.get("estimated_duration", 60)
-            desc = getattr(t, "description", None) or t.get("description", "")
-            prio = getattr(t, "priority_score", None) or t.get("priority_score", 50)
-            loc = getattr(t, "location_name", None) or t.get("location_name") or getattr(getattr(t, "asset", None), "location", "")
+            is_d = isinstance(t, dict)
+            t_id = getattr(t, "task_id", None) or (t.get("task_id") or t.get("id") if is_d else None)
+            dept = getattr(t, "department", None) or (t.get("department", "Track") if is_d else "Track")
+            corr_id = getattr(t, "corridor_id", None) or (t.get("corridor_id") if is_d else None) or (getattr(getattr(t, "asset", None), "corridor_id", 2) if hasattr(t, "asset") else 2)
+            sec_id = getattr(t, "section_id", None) or (t.get("section_id") if is_d else None) or 2
+            dur = getattr(t, "estimated_duration", None) or (t.get("estimated_duration", 60) if is_d else 60)
+            desc = getattr(t, "description", None) or (t.get("description", "") if is_d else "")
+            prio = getattr(t, "priority_score", None) or (t.get("priority_score", 50) if is_d else 50)
+            loc = getattr(t, "location_name", None) or (t.get("location_name") if is_d else None) or getattr(getattr(t, "asset", None), "location", "")
 
             s_km, e_km = LinearReferencingService.parse_chainage(loc or "", default_start_km=42.0)
 

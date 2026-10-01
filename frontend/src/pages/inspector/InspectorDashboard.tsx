@@ -13,6 +13,7 @@ import {
   Train,
   Bell
 } from 'lucide-react'
+import { SafetyChecklistCard } from '../../components/inspector/SafetyChecklistCard'
 
 export const InspectorDashboard: React.FC = () => {
   const { user } = useAuth()
@@ -212,8 +213,11 @@ export const InspectorDashboard: React.FC = () => {
           )}
         </div>
 
-        {/* Right Column: Notifications & Timetable Quick View */}
+        {/* Right Column: Pre-Possession Safety Checklist & Notifications & Timetable */}
         <div className="space-y-6">
+          {/* Official Indian Railways Pre-Possession Safety Checklist with Bhashini TTS Readout */}
+          <SafetyChecklistCard />
+
           {/* Urgent Notifications */}
           <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-5 space-y-3">
             <div className="flex items-center justify-between border-b border-zinc-800 pb-2.5">

@@ -53,20 +53,28 @@ export const Corridors: React.FC = () => {
                 <h3 className="font-medium text-base text-zinc-100">{c.name}</h3>
                 <div className="flex items-center space-x-2 text-xs text-zinc-400 mt-1">
                   <MapPin className="w-3.5 h-3.5 text-zinc-500" />
-                  <span>{c.start_station} &rarr; {c.end_station}</span>
+                  <span>
+                    {c.start_station} {c.start_station_code && `(${c.start_station_code})`} &rarr; {c.end_station} {c.end_station_code && `(${c.end_station_code})`}
+                  </span>
                 </div>
               </div>
 
-              {/* Quick Metrics */}
+              {/* OGD Government Density Metrics */}
               <div className="grid grid-cols-2 gap-2 text-xs py-2 border-y border-zinc-800">
+                <div>
+                  <span className="text-[10px] text-zinc-500 font-mono uppercase block">OGD GMT Density</span>
+                  <span className="font-mono text-emerald-400 font-semibold">{c.gmt_density || 52.4} GMT/yr</span>
+                </div>
                 <div>
                   <span className="text-[10px] text-zinc-500 font-mono uppercase block">Route Capacity</span>
                   <span className="font-mono text-zinc-200">{c.route_capacity || 20} trains/hr</span>
                 </div>
-                <div>
-                  <span className="text-[10px] text-zinc-500 font-mono uppercase block">Track Sections</span>
-                  <span className="font-mono text-zinc-200">{c.sections?.length || 4} sections</span>
-                </div>
+              </div>
+
+              {/* Data Source Badge */}
+              <div className="text-[10px] font-mono text-slate-400 bg-slate-950/80 px-2.5 py-1 rounded border border-slate-800 flex items-center justify-between">
+                <span>{c.data_source || 'Aligned with OGD Platform India (data.gov.in)'}</span>
+                <span className="text-blue-400 font-bold">data.gov.in</span>
               </div>
 
               {/* Visual Section Schematic Strip */}

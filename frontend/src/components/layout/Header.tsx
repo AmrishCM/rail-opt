@@ -15,8 +15,11 @@ import {
   Search,
   Check,
   Layers,
-  X
+  X,
+  Mic
 } from 'lucide-react'
+import { BhashiniVoiceModal } from '../inspector/BhashiniVoiceModal'
+import { ThemeToggle } from '../common/ThemeToggle'
 
 export interface HeaderProps {
   onOpenEmergencyModal: () => void
@@ -28,6 +31,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenEmergencyModal }) => {
   const navigate = useNavigate()
   const location = useLocation()
 
+  const [bhashiniModalOpen, setBhashiniModalOpen] = useState(false)
   const [roleModalOpen, setRoleModalOpen] = useState(false)
   const [helpModalOpen, setHelpModalOpen] = useState(false)
   const [notifOpen, setNotifOpen] = useState(false)
@@ -239,6 +243,23 @@ export const Header: React.FC<HeaderProps> = ({ onOpenEmergencyModal }) => {
               </button>
             )}
 
+            {/* Bhashini DPI Multilingual Voice AI Assistant (Universal access) */}
+            <button
+              onClick={() => setBhashiniModalOpen(true)}
+              className="inline-flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg border border-cyan-500/40 bg-gradient-to-r from-blue-900/50 via-slate-900 to-cyan-950/50 hover:border-cyan-400 text-cyan-300 text-xs font-bold transition-all shadow-sm shadow-cyan-500/10 active:translate-y-[1px]"
+              title="Bhashini Government Digital Public Infrastructure (DPI): Multilingual Voice & Speech AI"
+            >
+              <Mic className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
+              <span className="hidden sm:inline font-mono text-[11px]">भाषिणी AI</span>
+              <span className="text-[10px] text-slate-300 hidden md:inline">हिन्दी/தமிழ்</span>
+              <span className="text-[9px] bg-cyan-500/20 text-cyan-200 px-1.5 py-0.2 rounded-full font-mono font-bold">
+                DPI
+              </span>
+            </button>
+
+            {/* Light / Dark Mode Toggle */}
+            <ThemeToggle />
+
             {/* Role Switcher Button */}
             <button
               onClick={() => setRoleModalOpen(true)}
@@ -378,6 +399,11 @@ export const Header: React.FC<HeaderProps> = ({ onOpenEmergencyModal }) => {
                       <HelpCircle className="w-4 h-4 text-zinc-500" strokeWidth={1.5} />
                       <span>Workflow Guide</span>
                     </button>
+
+                    <div className="px-3.5 py-2 flex items-center justify-between border-t border-zinc-800">
+                      <span className="text-zinc-400 text-xs">Theme</span>
+                      <ThemeToggle showLabel />
+                    </div>
                   </div>
 
                   <div className="border-t border-zinc-800 pt-1">
@@ -544,6 +570,18 @@ export const Header: React.FC<HeaderProps> = ({ onOpenEmergencyModal }) => {
           </div>
         </div>
       )}
+
+      {/* Global Bhashini Multilingual Voice Assistant Modal */}
+      <BhashiniVoiceModal
+        isOpen={bhashiniModalOpen}
+        onClose={() => setBhashiniModalOpen(false)}
+        onInsert={(text) => {
+          setBhashiniModalOpen(false)
+          const canonical = toCanonicalRole(user?.role)
+          const target = canonical === 'INSPECTOR' ? '/inspector/report-issue' : '/engineer/report-issue'
+          navigate(target, { state: { voiceText: text } })
+        }}
+      />
     </>
   )
 }

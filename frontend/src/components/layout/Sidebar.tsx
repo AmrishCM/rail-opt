@@ -10,7 +10,8 @@ import {
   BarChart3,
   Bot,
   Database,
-  Settings
+  Settings,
+  Mic
 } from 'lucide-react'
 
 export const Sidebar: React.FC = () => {
@@ -56,7 +57,22 @@ export const Sidebar: React.FC = () => {
         </div>
       </div>
 
-      <div className="mt-auto p-3 border-t border-zinc-800">
+      <div className="mt-auto p-3 border-t border-zinc-800 space-y-2">
+        <div className="rounded-md bg-gradient-to-br from-blue-950/60 to-indigo-950/60 p-2.5 border border-blue-500/30 text-xs">
+          <div className="flex items-center justify-between text-cyan-300 font-bold mb-1">
+            <div className="flex items-center space-x-1.5">
+              <Mic className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
+              <span className="text-[11px]">भाषिणी Bhashini AI</span>
+            </div>
+            <span className="text-[9px] text-blue-300 bg-blue-500/20 px-1.5 py-0.2 rounded font-mono">
+              DPI
+            </span>
+          </div>
+          <p className="text-[10px] text-slate-300 leading-snug">
+            Multilingual Voice AI (Hindi / Tamil ASR & TTS)
+          </p>
+        </div>
+
         <div className="rounded-md bg-zinc-900/60 p-3 border border-zinc-800/80 text-xs">
           <div className="flex items-center justify-between text-zinc-300 font-medium mb-1">
             <span className="text-[11px] text-zinc-400">Solver Engine</span>

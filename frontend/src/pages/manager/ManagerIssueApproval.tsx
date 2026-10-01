@@ -9,6 +9,7 @@ import {
   assignTask
 } from '../../services/api'
 import { EmptyState } from '../../components/common/EmptyState'
+import { ApiSetuVerificationBadge } from '../../components/workflow/ApiSetuVerificationBadge'
 import {
   CheckCircle2,
   XCircle,
@@ -347,6 +348,15 @@ export const ManagerIssueApproval: React.FC = () => {
                     ))}
                   </select>
                 </div>
+              )}
+
+              {/* API Setu Heavy Machinery Operator Verification Badge */}
+              {(modalType === 'APPROVE' || modalType === 'ASSIGN') && (
+                <ApiSetuVerificationBadge
+                  operatorName={engineers.find((e) => e.user_id === selectedEngineerId)?.full_name || 'Ravi Sharma'}
+                  machineryType={selectedTask.department === 'Traction Distribution' ? 'OHE 8-Wheeler Tower Wagon' : 'Track Tamping Machine (TTM)'}
+                  competencyClass={selectedTask.department === 'Traction Distribution' ? 'Class-A OHE Emergency Gang Driver' : 'Class-A Heavy Track Machine Specialist'}
+                />
               )}
 
               <div>

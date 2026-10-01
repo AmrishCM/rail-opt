@@ -28,6 +28,8 @@ from . import (
     authorities,
     mock_data,
     ingestion,
+    bhashini,
+    apisetu,
 )
 
 # Create main API router
@@ -70,5 +72,7 @@ api_router.include_router(replan.router, prefix="/replan", tags=["replanning"])
 api_router.include_router(data.router, prefix="/data", tags=["data"])
 api_router.include_router(mock_data.router, prefix="/mock-data", tags=["mock_data"])
 api_router.include_router(ingestion.router, prefix="/ingestion", tags=["ingestion"])
+api_router.include_router(bhashini.router, prefix="/bhashini", tags=["bhashini"])
+api_router.include_router(apisetu.router, prefix="/apisetu", tags=["apisetu"])
 
 __all__ = ["api_router"]

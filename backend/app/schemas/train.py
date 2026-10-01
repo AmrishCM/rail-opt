@@ -15,6 +15,10 @@ class TrainMovementResponse(BaseModel):
     train_number: Optional[str] = None
     train_type: Optional[str] = None
     priority: Optional[str] = "MEDIUM"
+    station_code: Optional[str] = None
+    chainage_km: Optional[float] = None
+    platform_no: Optional[str] = None
+    data_source: Optional[str] = "Aligned with OGD Platform India (data.gov.in)"
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -23,6 +27,10 @@ class TrainResponse(BaseModel):
     train_number: str
     train_type: str
     priority: str
+    origin_station_code: Optional[str] = None
+    destination_station_code: Optional[str] = None
+    ogd_train_id: Optional[str] = None
+    data_source: Optional[str] = "Aligned with OGD Platform India (data.gov.in)"
     max_speed: Optional[int] = 130
     capacity: Optional[int] = 1200
     current_status: str = "AVAILABLE"

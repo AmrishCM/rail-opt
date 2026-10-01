@@ -16,6 +16,7 @@ from ...models.plan import (
     MaintenancePlan, PlanAssignment, PlanStatus, PlanType, PlanApproval, PlanChange
 )
 from ...models.asset import Asset
+from ...models.execution import ExecutionRecord, Notification, ExecutionStatus
 from ...models.scenario import AuditLog
 from ...ml.criticality import get_explainable_priority, calculate_composite_criticality_index
 from ...ml.failure_prediction import predict_disruption_risk

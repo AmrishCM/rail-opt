@@ -116,7 +116,7 @@ def calculate_composite_criticality_index(
 
     reasons: List[str] = []
     if eff_severity >= 9 or (benchmark and "IMR" in defect_code.upper()):
-        reasons.append("Catastrophic failure hazard (IMR / Rail fracture / Pier scour threshold exceeded)")
+        reasons.append("Critical safety and catastrophic failure hazard (IMR / Rail fracture / Pier scour threshold exceeded)")
     elif eff_severity >= 7:
         reasons.append(f"Significant structural or interlocking integrity risk (Severity {eff_severity}/10)")
 

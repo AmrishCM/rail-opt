@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 import { AuthProvider, useAuth, getRoleDashboardPath } from './context/AuthContext'
 import { RealtimeProvider } from './context/RealtimeContext'
+import { ThemeProvider } from './context/ThemeContext'
 import { ProtectedRoute, RoleRoute, PermissionRoute } from './components/auth/ProtectedRoute'
 
 // Layouts
@@ -74,8 +75,9 @@ const RoleDashboardRedirect: React.FC = () => {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <RealtimeProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <RealtimeProvider>
           <BrowserRouter>
             <Routes>
               {/* Public Authentication */}
@@ -225,7 +227,8 @@ function App() {
           </BrowserRouter>
         </RealtimeProvider>
       </AuthProvider>
-    </QueryClientProvider>
+    </ThemeProvider>
+  </QueryClientProvider>
   )
 }
 

@@ -476,3 +476,57 @@ export async function computeDisruptionRisk(payload: {
   const res = await api.post('/planning/ml/disruption-risk', payload)
   return res.data
 }
+
+// ============================================================================
+// Indian Government Digital Infrastructure (DPI) Integrations - SIH 2026
+// ============================================================================
+
+// 1. Bhashini AI (Voice & Regional Language ASR / TTS)
+export async function fetchBhashiniSamples() {
+  const res = await api.get('/bhashini/samples')
+  return res.data
+}
+
+export async function transcribeBhashiniAudio(payload: {
+  audio_base64?: string
+  sample_id?: string
+  language?: string
+}) {
+  const res = await api.post('/bhashini/asr', payload)
+  return res.data
+}
+
+export async function synthesizeBhashiniSpeech(payload: {
+  text: string
+  language?: string
+}) {
+  const res = await api.post('/bhashini/tts', payload)
+  return res.data
+}
+
+export async function fetchBhashiniChecklist(language: string = 'hi') {
+  const res = await api.get('/bhashini/checklist', { params: { language } })
+  return res.data
+}
+
+// 2. API Setu Sandbox (Operator Driving License & Competency Certificate Verification)
+export async function verifyOperatorLicense(payload: {
+  operator_id?: number
+  license_number?: string
+  operator_name?: string
+  machinery_type?: string
+}) {
+  const res = await api.post('/apisetu/verify-operator', payload)
+  return res.data
+}
+
+export async function fetchVerifiedOperators() {
+  const res = await api.get('/apisetu/operators')
+  return res.data
+}
+
+// 3. Open Government Data (data.gov.in) Alignment Metadata
+export async function fetchOgdMetadata() {
+  const res = await api.get('/data/ogd-metadata')
+  return res.data
+}

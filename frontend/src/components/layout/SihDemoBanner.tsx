@@ -23,34 +23,34 @@ export const DEMO_STORY_STEPS = [
     step: 1,
     role: 'engineer@railopt.demo',
     roleLabel: 'Engineer Ravi',
-    title: '1. Report Defect & Generate AI Plan',
+    title: '1. Report Defect & AI Plan',
     actionText: 'Switch to Engineer',
     targetRoute: '/planner',
-    desc: 'Review critical rail crack on C2-02, generate CP-SAT coordinated plan, and submit for approval.'
+    desc: 'Review critical rail crack on C2-02, generate CP-SAT coordinated plan, aligned with data.gov.in OGD network.'
   },
   {
     step: 2,
     role: 'manager@railopt.demo',
     roleLabel: 'Manager Rajesh',
-    title: '2. Review & Approve Plan',
+    title: '2. Approve Plan [API Setu]',
     actionText: 'Switch to Manager',
     targetRoute: '/planner',
-    desc: 'Review multi-department combination, train impact, and authorize corridor possession.'
+    desc: 'Review multi-department combination, verify operator competency via API Setu, and authorize corridor possession.'
   },
   {
     step: 3,
     role: 'inspector@railopt.demo',
     roleLabel: 'Inspector Manoj',
-    title: '3. Execute Field Work Today',
+    title: '3. Field PWA [Bhashini]',
     actionText: 'Switch to Inspector',
-    targetRoute: '/execution',
-    desc: 'Start 14:00 block on C2-02, upload track weld photo evidence, and complete work.'
+    targetRoute: '/inspector/report-issue',
+    desc: 'Dictate defect with Bhashini voice ASR in Hindi/Tamil, verify safety checklist via TTS readout, and log issue.'
   },
   {
     step: 4,
     role: 'manager@railopt.demo',
     roleLabel: 'Manager Rajesh',
-    title: '4. Report Critical Defect & Re-Plan',
+    title: '4. Emergency Re-Plan',
     actionText: 'Report Defect & Re-Plan',
     targetRoute: '/',
     desc: 'Signal S-104 fails at 14:20. Trigger automatic dynamic replanner and compare before/after.'
@@ -96,6 +96,9 @@ export const SihDemoBanner: React.FC<SihDemoBannerProps> = ({
               </span>
               <span className="text-[10px] bg-white/10 px-2 py-0.2 rounded-full text-slate-200">
                 Story 1 to 4
+              </span>
+              <span className="hidden lg:inline-flex items-center space-x-1.5 text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.2 rounded-full font-bold">
+                <span>DPI: Bhashini &bull; API Setu &bull; data.gov.in OGD</span>
               </span>
             </div>
             <p className="text-[11px] text-slate-300 hidden sm:block">

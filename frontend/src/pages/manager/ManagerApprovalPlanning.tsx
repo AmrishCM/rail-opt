@@ -9,6 +9,7 @@ import api, {
   fetchUsers
 } from '../../services/api'
 import IssueStatusWorkflow from '../../components/workflow/IssueStatusWorkflow'
+import { ApiSetuVerificationBadge } from '../../components/workflow/ApiSetuVerificationBadge'
 import { PriorityBadge, StatusBadge } from '../../components/common/RailwayBadges'
 import {
   ShieldAlert,
@@ -467,6 +468,17 @@ export const ManagerApprovalPlanning: React.FC = () => {
                       ))}
                     </ul>
                   </div>
+
+                  {/* API Setu Heavy Machinery Operator Verification */}
+                  <div className="pt-2">
+                    <ApiSetuVerificationBadge
+                      operatorName={planData.recommended_plan?.engineer || 'Ravi Sharma (Senior Track Machine Engineer)'}
+                      licenseNumber="DL-0420180098421"
+                      certificateId="RB-TTM-2026-CERT-8841"
+                      machineryType="Track Tamping Machine (TTM / Plasser 08-32)"
+                      competencyClass="Class-A Heavy Track Machine Specialist"
+                    />
+                  </div>
                 </div>
 
                 {/* Right: Operational Conflicts */}
@@ -663,6 +675,13 @@ export const ManagerApprovalPlanning: React.FC = () => {
                   ))}
                 </select>
               </div>
+
+              {/* API Setu Verification Badge on Approval Modal */}
+              <ApiSetuVerificationBadge
+                operatorName={engineers.find((e) => e.user_id === selectedEngineerId)?.full_name || 'Ravi Sharma'}
+                machineryType="Track Tamping Machine (TTM / Plasser 08-32)"
+                competencyClass="Class-A Heavy Track Machine Specialist"
+              />
 
               <div>
                 <label className="block text-zinc-400 font-mono uppercase text-[10px] mb-1">

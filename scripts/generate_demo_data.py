@@ -68,6 +68,8 @@ def main():
     print("NOT actual Indian Railways operational data")
     print("=" * 65)
 
+    if args.reset:
+        Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
     try:

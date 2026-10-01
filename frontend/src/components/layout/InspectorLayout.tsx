@@ -12,7 +12,8 @@ import {
   Bell,
   User,
   Train,
-  Compass
+  Compass,
+  Mic
 } from 'lucide-react'
 
 export const InspectorLayout: React.FC = () => {
@@ -77,6 +78,22 @@ export const InspectorLayout: React.FC = () => {
                 )
               })}
             </nav>
+
+            {/* Government DPI Bhashini AI Scope */}
+            <div className="p-3 bg-gradient-to-br from-blue-950/60 via-slate-900 to-indigo-950/60 rounded-xl border border-blue-500/30 space-y-1.5">
+              <div className="flex items-center justify-between text-xs font-bold text-cyan-300">
+                <div className="flex items-center space-x-1.5">
+                  <Mic className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
+                  <span>भाषिणी Bhashini AI</span>
+                </div>
+                <span className="text-[9px] bg-blue-500/20 text-blue-300 px-1.5 py-0.5 rounded-full font-mono font-bold">
+                  DPI
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-300 leading-snug">
+                Voice AI active: Multilingual ASR & TTS enabled in हिन्दी & தமிழ்.
+              </p>
+            </div>
           </div>
 
           {/* Footer scope */}

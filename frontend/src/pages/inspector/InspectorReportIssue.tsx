@@ -12,8 +12,12 @@ import {
   X,
   Layers,
   FileText,
-  Sparkles
+  Sparkles,
+  Mic,
+  Volume2
 } from 'lucide-react'
+import { BhashiniVoiceModal } from '../../components/inspector/BhashiniVoiceModal'
+import { SafetyChecklistCard } from '../../components/inspector/SafetyChecklistCard'
 
 const DEPARTMENT_PRESETS: Record<string, { label: string; system: string; suggestions: { issue: string; location: string; desc: string }[] }> = {
   'Engineering/Track': {
@@ -94,6 +98,18 @@ export const InspectorReportIssue: React.FC = () => {
         setPhoto(reader.result as string)
       }
       reader.readAsDataURL(file)
+    }
+  }
+
+  const [voiceModalOpen, setVoiceModalOpen] = useState(false)
+
+  const handleVoiceInsert = (text: string, sugIssue?: string, sugLoc?: string) => {
+    setDescription(text)
+    if (!issue.trim() && sugIssue) {
+      setIssue(sugIssue)
+    }
+    if (sugLoc) {
+      setLocation(sugLoc)
     }
   }
 
@@ -319,20 +335,40 @@ export const InspectorReportIssue: React.FC = () => {
           )}
         </div>
 
-        {/* FIELD 5: Description */}
+        {/* FIELD 5: Description with Bhashini Voice Input */}
         <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-            <FileText className="w-4 h-4 text-cyan-400" />
-            5. Operational Description
-          </label>
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+              <FileText className="w-4 h-4 text-cyan-400" />
+              5. Operational Description
+            </label>
+            <button
+              type="button"
+              onClick={() => setVoiceModalOpen(true)}
+              className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-lg bg-orange-500/15 hover:bg-orange-500/25 text-orange-400 border border-orange-500/30 text-xs font-bold transition-all shadow-sm shadow-orange-500/10 active:scale-95"
+            >
+              <Mic className="w-3.5 h-3.5 text-orange-400 animate-pulse" />
+              <span>Bhashini Voice (हिन्दी / தமிழ்)</span>
+            </button>
+          </div>
           <textarea
             rows={4}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Detail the technical defect, required safety precautions, rail temperature, or speed restrictions..."
+            placeholder="Detail the technical defect, required safety precautions, rail temperature, or speed restrictions (or use Bhashini voice button to dictate in Hindi/Tamil)..."
             className="w-full bg-slate-900 border border-slate-700 focus:border-blue-500 rounded-xl p-3 text-sm text-white focus:outline-none transition-colors resize-none"
           />
         </div>
+
+        {/* Pre-Possession Safety Checklist with Regional TTS Readout */}
+        <SafetyChecklistCard />
+
+        {/* Bhashini Voice Input Modal */}
+        <BhashiniVoiceModal
+          isOpen={voiceModalOpen}
+          onClose={() => setVoiceModalOpen(false)}
+          onInsert={handleVoiceInsert}
+        />
 
         {/* Submit Actions */}
         <div className="pt-3 border-t border-slate-800 flex items-center justify-end space-x-3">

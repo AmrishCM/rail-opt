@@ -127,17 +127,17 @@ export function DataTable<T>({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
-          className="bg-white border border-[var(--status-critical)] rounded-xl p-6 text-center shadow-xs"
+          className="bg-[#111a2e] border border-red-500/40 rounded-2xl p-6 text-center shadow-lg"
         >
-          <div className="w-10 h-10 rounded-xl bg-[var(--status-critical)]/10 text-[var(--status-critical)] flex items-center justify-center mx-auto mb-2.5">
+          <div className="w-10 h-10 rounded-xl bg-red-500/10 text-red-400 flex items-center justify-center mx-auto mb-2.5">
             <AlertCircle className="w-5 h-5" />
           </div>
-          <h4 className="text-sm font-bold text-[var(--text-base)]">Unable to load table data</h4>
-          <p className="text-xs text-[var(--text-base)]/70 mt-1">{error}</p>
+          <h4 className="text-sm font-bold text-white">Unable to load table data</h4>
+          <p className="text-xs text-slate-300 mt-1">{error}</p>
           {emptyActionText && onEmptyAction && (
             <button
               onClick={onEmptyAction}
-              className="mt-4 px-4 py-2 bg-[var(--accent-primary)] text-white text-xs font-bold rounded-lg hover:bg-[var(--accent-primary)]/90 transition-colors min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-primary)]/20 focus-visible:ring-offset-2"
+              className="mt-4 px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-500 transition-colors min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:ring-offset-2"
             >
               {emptyActionText}
             </button>
@@ -155,17 +155,17 @@ export function DataTable<T>({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
-          className="bg-white border border-base rounded-xl p-8 sm:p-12 text-center"
+          className="bg-[#111a2e] border border-[#243552] rounded-2xl p-8 sm:p-12 text-center shadow-lg"
         >
-          <div className="w-12 h-12 rounded-xl bg-base/20 text-[var(--text-base)]/40 flex items-center justify-center mx-auto mb-3">
+          <div className="w-12 h-12 rounded-xl bg-slate-800/80 text-slate-400 flex items-center justify-center mx-auto mb-3">
             <Inbox className="w-6 h-6" />
           </div>
-          <h4 className="text-sm font-bold text-[var(--text-base)]">{emptyTitle}</h4>
-          <p className="text-xs text-[var(--text-base)]/60 mt-1 max-w-sm mx-auto">{emptyDescription}</p>
+          <h4 className="text-sm font-bold text-white">{emptyTitle}</h4>
+          <p className="text-xs text-slate-300 mt-1 max-w-sm mx-auto">{emptyDescription}</p>
           {emptyActionText && onEmptyAction && (
             <button
               onClick={onEmptyAction}
-              className="mt-4 px-4 py-2 bg-[var(--accent-primary)] text-white text-xs font-bold rounded-lg hover:bg-[var(--accent-primary)]/90 transition-colors min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-primary)]/20 focus-visible:ring-offset-2"
+              className="mt-4 px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-500 transition-colors min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:ring-offset-2"
             >
               {emptyActionText}
             </button>
@@ -181,14 +181,14 @@ export function DataTable<T>({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -10 }}
-        className="bg-white border border-base rounded-xl shadow-xs overflow-hidden"
+        className="bg-[#111a2e] border border-[#243552] rounded-2xl shadow-xl overflow-hidden"
       >
         {/* Optional Header with Title & Action controls */}
         {(title || actions) && (
-          <div className="px-4 sm:px-5 py-3.5 border-b border-base/25 bg-base/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="px-4 sm:px-5 py-3.5 border-b border-[#243552] bg-[#16223b] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              {title && <h3 className="text-sm font-bold text-[var(--text-base)] leading-tight">{title}</h3>}
-              {subtitle && <p className="text-xs text-[var(--text-base)]/60 mt-0.5">{subtitle}</p>}
+              {title && <h3 className="text-sm font-bold text-white leading-tight">{title}</h3>}
+              {subtitle && <p className="text-xs text-slate-300 mt-0.5">{subtitle}</p>}
             </div>
             {actions && <div className="flex items-center space-x-2 shrink-0">{actions}</div>}
           </div>
@@ -199,7 +199,7 @@ export function DataTable<T>({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
-          className="md:hidden divide-y divide-base/20 p-2 sm:p-3 space-y-2"
+          className="md:hidden divide-y divide-[#243552]/70 p-2 sm:p-3 space-y-2"
         >
           {paginatedData.map((item, idx) => {
             const key = keyExtractor(item, startIndex + idx)
@@ -213,8 +213,8 @@ export function DataTable<T>({
                 exit={{ opacity: 0, x: 20, transition: { duration: 0.2 } }}
                 className={`p-3.5 rounded-xl border transition-colors ${
                   selectedRowKey === key
-                    ? 'bg-[var(--accent-primary)]/10 border-[var(--accent-primary)]'
-                    : 'bg-white border-base'
+                    ? 'bg-blue-600/20 border-blue-500'
+                    : 'bg-[#16223b] border-[#243552]'
                 }`}
               >
                 {renderMobileCard ? (
@@ -225,8 +225,8 @@ export function DataTable<T>({
                     onClick={() => onRowClick && onRowClick(item)}
                     className={`p-3.5 rounded-xl border transition-colors ${
                       selectedRowKey === key
-                        ? 'bg-[var(--accent-primary)]/10 border-[var(--accent-primary)]'
-                        : 'bg-white border-base'
+                        ? 'bg-blue-600/20 border-blue-500'
+                        : 'bg-[#16223b] border-[#243552]'
                     }`}
                   >
                     <div className="space-y-2 text-xs">
@@ -234,10 +234,10 @@ export function DataTable<T>({
                         const val = col.render ? col.render(item, startIndex + idx) : (item as any)[col.key]
                         return (
                           <div key={col.key} className="flex justify-between items-start gap-2">
-                            <span className="font-semibold text-[var(--text-base)]/60 text-[11px] uppercase tracking-wider">
+                            <span className="font-semibold text-slate-400 text-[11px] uppercase tracking-wider">
                               {col.header}
                             </span>
-                            <span className="text-[var(--text-base)] text-right font-medium text-xs">{val ?? '—'}</span>
+                            <span className="text-white text-right font-medium text-xs">{val ?? '—'}</span>
                           </div>
                         )
                       })}
@@ -257,10 +257,10 @@ export function DataTable<T>({
           className="hidden md:block overflow-x-auto"
         >
           <div className="w-full">
-            <table className="w-full text-left border-collapse text-[var(--text-base)]">
+            <table className="w-full text-left border-collapse text-slate-100">
               <thead>
-                <tr className="bg-base/50 border-b border-base text-[var(--text-base)]/60 font-bold uppercase tracking-wider text-[11px]">
-                  {renderExpandedRow && <th className="w-8 px-3 py-3"></th>}
+                <tr className="bg-[#16223b] border-b border-[#243552] text-slate-300 font-bold uppercase tracking-wider text-[11px]">
+                  {renderExpandedRow && <th className="w-8 px-3 py-3.5"></th>}
                   {columns.map((col) => {
                     const alignClass =
                       col.align === 'right'
@@ -279,7 +279,7 @@ export function DataTable<T>({
                     return (
                       <th
                         key={col.key}
-                        className={`px-4 py-3 text-[var(--text-base)]/60 ${alignClass} ${hideClass} ${col.className || ''}`}
+                        className={`px-4 py-3.5 text-slate-300 font-bold ${alignClass} ${hideClass} ${col.className || ''}`}
                       >
                         {col.header}
                       </th>
@@ -287,7 +287,7 @@ export function DataTable<T>({
                   })}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-base/20">
+              <tbody className="divide-y divide-[#243552]/70 bg-[#111a2e]">
                 {paginatedData.map((item, idx) => {
                   const rowIndex = startIndex + idx
                   const key = keyExtractor(item, rowIndex)
@@ -303,15 +303,15 @@ export function DataTable<T>({
                         onClick={() => onRowClick && onRowClick(item)}
                         className={`transition-colors cursor-pointer ${
                           isSelected
-                            ? 'bg-[var(--accent-primary)]/20 border-l-4 border-[var(--accent-primary)] font-semibold'
-                            : 'hover:bg-base/50 bg-white'
+                            ? 'bg-blue-600/20 border-l-4 border-blue-500 font-semibold'
+                            : 'hover:bg-[#1a2744]/80 bg-transparent'
                         }`}
                       >
                         {renderExpandedRow && (
-                          <td className="px-3 py-3 w-8 text-[var(--text-base)]/40">
+                          <td className="px-3 py-3 w-8 text-slate-400">
                             <button
                               onClick={(e) => toggleExpand(key, e)}
-                              className="p-1 hover:text-[var(--text-base)]/60 rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-primary)]/20 focus-visible:ring-offset-2"
+                              className="p-1 hover:text-white rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:ring-offset-2"
                             >
                               {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                             </button>
@@ -340,7 +340,7 @@ export function DataTable<T>({
                           return (
                             <td
                               key={col.key}
-                              className={`px-4 py-3 text-[var(--text-base)]/50 align-middle ${alignClass} ${hideClass} ${col.className || ''}`}
+                              className={`px-4 py-3.5 text-slate-200 align-middle ${alignClass} ${hideClass} ${col.className || ''}`}
                             >
                               {cellVal ?? '—'}
                             </td>
@@ -355,9 +355,9 @@ export function DataTable<T>({
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           exit={{ opacity: 0 }}
-                          className="bg-base/30"
+                          className="bg-slate-900/90"
                         >
-                          <td colSpan={columns.length + 1} className="p-4 border-b border-base">
+                          <td colSpan={columns.length + 1} className="p-4 border-b border-[#243552]">
                             {renderExpandedRow(item)}
                           </td>
                         </motion.tr>
@@ -376,31 +376,31 @@ export function DataTable<T>({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="px-4 py-2.5 border-t border-base/25 bg-base/50 flex items-center justify-between text-xs text-[var(--text-base)]/60"
+            className="px-4 py-3 border-t border-[#243552] bg-[#16223b] flex items-center justify-between text-xs text-slate-300"
           >
             <div>
-              Showing <strong className="text-[var(--text-base)]">{startIndex + 1}</strong> to{' '}
-              <strong className="text-[var(--text-base)]">
+              Showing <strong className="text-white">{startIndex + 1}</strong> to{' '}
+              <strong className="text-white">
                 {Math.min(startIndex + pageSize, data.length)}
               </strong>{' '}
-              of <strong className="text-[var(--text-base)]">{data.length}</strong> records
+              of <strong className="text-white">{data.length}</strong> records
             </div>
 
             <div className="flex items-center space-x-1.5">
               <button
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className="p-1.5 rounded-lg border border-base/20 bg-white hover:bg-base/50 disabled:opacity-40 disabled:pointer-events-none text-[var(--text-base)]/60 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-primary)]/20 focus-visible:ring-offset-2"
+                className="p-1.5 rounded-lg border border-[#243552] bg-[#111a2e] hover:bg-[#1a2744] disabled:opacity-40 disabled:pointer-events-none text-slate-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:ring-offset-2"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
-              <span className="font-semibold text-[var(--text-base)]/50 px-2 font-mono">
+              <span className="font-semibold text-slate-300 px-2 font-mono">
                 {currentPage} / {totalPages}
               </span>
               <button
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
-                className="p-1.5 rounded-lg border border-base/20 bg-white hover:bg-base/50 disabled:opacity-40 disabled:pointer-events-none text-[var(--text-base)]/60 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-primary)]/20 focus-visible:ring-offset-2"
+                className="p-1.5 rounded-lg border border-[#243552] bg-[#111a2e] hover:bg-[#1a2744] disabled:opacity-40 disabled:pointer-events-none text-slate-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:ring-offset-2"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>

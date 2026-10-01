@@ -1,6 +1,7 @@
 import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { Train, ShieldAlert, Cpu, Activity, Database, Sparkles } from 'lucide-react'
+import { ThemeToggle } from '../common/ThemeToggle'
 
 interface NavbarProps {
   onTriggerDemoStep?: (step: number) => void
@@ -42,6 +43,8 @@ export const Navbar: React.FC<NavbarProps> = () => {
 
         {/* Right: Quick Indicators & Demo Trigger */}
         <div className="flex items-center space-x-3">
+          <ThemeToggle />
+
           <Link
             to="/planner"
             className="flex items-center space-x-1.5 px-3 py-1.5 rounded bg-zinc-800 text-zinc-200 text-xs font-mono hover:bg-zinc-700 transition-colors"

@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { useState, useEffect } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { createTask } from '../../services/api'
 import {
@@ -9,12 +9,17 @@ import {
   CheckCircle2,
   ArrowLeft,
   AlertTriangle,
-  ShieldAlert
+  ShieldAlert,
+  Mic,
+  FileText
 } from 'lucide-react'
+import { BhashiniVoiceModal } from '../../components/inspector/BhashiniVoiceModal'
+import { SafetyChecklistCard } from '../../components/inspector/SafetyChecklistCard'
 
 export const EngineerReportIssue: React.FC = () => {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
 
   const [department, setDepartment] = useState(user?.department || 'TRACK')
   const [defectType, setDefectType] = useState('Track Geometry / Alignment')
@@ -24,9 +29,17 @@ export const EngineerReportIssue: React.FC = () => {
   const [locationName, setLocationName] = useState('KM 142/6 Salem–Erode')
   const [description, setDescription] = useState('')
   const [photoEvidence, setPhotoEvidence] = useState<string | null>(null)
+  const [voiceModalOpen, setVoiceModalOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+
+  useEffect(() => {
+    const passedVoice = (location.state as any)?.voiceText
+    if (passedVoice) {
+      setDescription(passedVoice)
+    }
+  }, [location.state])
 
   const handlePhotoCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -165,16 +178,32 @@ export const EngineerReportIssue: React.FC = () => {
         </div>
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-bold uppercase tracking-wider text-slate-300">4. Description</label>
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+              <FileText className="w-4 h-4 text-cyan-400" />
+              4. Operational Description
+            </label>
+            <button
+              type="button"
+              onClick={() => setVoiceModalOpen(true)}
+              className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-lg bg-orange-500/15 hover:bg-orange-500/25 text-orange-400 border border-orange-500/30 text-xs font-bold transition-all shadow-sm active:scale-95"
+            >
+              <Mic className="w-3.5 h-3.5 text-orange-400 animate-pulse" />
+              <span>Bhashini Voice (हिन्दी / தமிழ்)</span>
+            </button>
+          </div>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={3}
             required
-            placeholder="Technical details of observed defect..."
+            placeholder="Technical details of observed defect (or dictate using Bhashini Voice in Hindi/Tamil)..."
             className="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-xs text-white"
           />
         </div>
+
+        {/* Pre-Possession Safety Checklist with Regional TTS Readout */}
+        <SafetyChecklistCard />
 
         <div className="space-y-2">
           <label className="block text-xs font-bold uppercase tracking-wider text-slate-300">5. Photo Evidence</label>
@@ -196,6 +225,13 @@ export const EngineerReportIssue: React.FC = () => {
           </button>
         </div>
       </form>
+
+      {/* Bhashini Voice Input Modal */}
+      <BhashiniVoiceModal
+        isOpen={voiceModalOpen}
+        onClose={() => setVoiceModalOpen(false)}
+        onInsert={(text) => setDescription((prev) => prev ? `${prev} ${text}` : text)}
+      />
     </div>
   )
 }

@@ -12,6 +12,7 @@ import {
   AlertCircle,
   CheckCircle2
 } from 'lucide-react'
+import { ThemeToggle } from '../components/common/ThemeToggle'
 
 export const Login: React.FC = () => {
   const { login, demoUsers } = useAuth()
@@ -64,7 +65,12 @@ export const Login: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center p-4 sm:p-6 font-sans">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center p-4 sm:p-6 font-sans relative">
+      {/* Top Right Theme Switcher */}
+      <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-10">
+        <ThemeToggle showLabel />
+      </div>
+
       <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
         {/* Left: Product Branding & Overview */}
         <div className="space-y-6">

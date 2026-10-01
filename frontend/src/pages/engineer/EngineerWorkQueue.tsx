@@ -17,8 +17,10 @@ import {
   MapPin,
   X,
   FileCheck,
-  Check
+  Check,
+  Mic
 } from 'lucide-react'
+import { BhashiniVoiceModal } from '../../components/inspector/BhashiniVoiceModal'
 
 export interface EngineerWorkQueueProps {
   initialFilter?: 'ALL' | 'PENDING' | 'IN_PROGRESS' | 'COMPLETED'
@@ -39,6 +41,8 @@ export const EngineerWorkQueue: React.FC<EngineerWorkQueueProps> = ({ initialFil
   const [durationMinutes, setDurationMinutes] = useState(60)
   const [completionNotes, setCompletionNotes] = useState('')
   const [photoEvidence, setPhotoEvidence] = useState<string | null>(null)
+  const [bhashiniModalOpen, setBhashiniModalOpen] = useState(false)
+  const [bhashiniTarget, setBhashiniTarget] = useState<'completion' | 'problem' | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [actionSuccess, setActionSuccess] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
@@ -384,6 +388,32 @@ export const EngineerWorkQueue: React.FC<EngineerWorkQueueProps> = ({ initialFil
         </div>
       </div>
 
+      {/* Bhashini DPI Multilingual Voice AI Banner */}
+      <div className="bg-gradient-to-r from-blue-950/80 via-slate-900 to-indigo-950/80 border border-blue-500/40 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
+        <div className="flex items-center space-x-3">
+          <div className="w-10 h-10 rounded-xl bg-blue-500/20 border border-blue-500/40 flex items-center justify-center text-cyan-400 shrink-0">
+            <Mic className="w-5 h-5 animate-pulse" />
+          </div>
+          <div>
+            <div className="flex items-center space-x-2">
+              <span className="text-xs font-bold text-cyan-300 uppercase tracking-wider">Government DPI Integration</span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 font-mono font-bold border border-blue-500/30">भाषिणी Voice AI</span>
+            </div>
+            <p className="text-xs text-slate-300 mt-0.5">
+              Multilingual Voice AI enabled: Dictate work execution logs, track clearance notes, or report issues in हिन्दी or தமிழ்.
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => { setBhashiniTarget(null); setBhashiniModalOpen(true) }}
+          className="inline-flex items-center space-x-2 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-md shadow-blue-600/20 transition-all shrink-0 active:scale-95"
+        >
+          <Mic className="w-4 h-4" />
+          <span>Launch Bhashini Voice</span>
+        </button>
+      </div>
+
       {actionSuccess && (
         <div className="p-4 bg-emerald-500/20 border border-emerald-500/40 rounded-2xl text-emerald-300 flex items-center space-x-3 text-sm">
           <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-400" />
@@ -446,13 +476,23 @@ export const EngineerWorkQueue: React.FC<EngineerWorkQueueProps> = ({ initialFil
               </div>
 
               <div>
-                <label className="block text-slate-300 font-bold mb-1">Work Completion Notes *</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-slate-300 font-bold">Work Completion Notes *</label>
+                  <button
+                    type="button"
+                    onClick={() => { setBhashiniTarget('completion'); setBhashiniModalOpen(true) }}
+                    className="inline-flex items-center space-x-1 text-[11px] text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 px-2 py-0.5 rounded border border-amber-500/30 font-bold transition-colors active:scale-95"
+                  >
+                    <Mic className="w-3 h-3 text-amber-400 animate-pulse" />
+                    <span>Bhashini Voice (हिन्दी / தமிழ்)</span>
+                  </button>
+                </div>
                 <textarea
                   value={completionNotes}
                   onChange={(e) => setCompletionNotes(e.target.value)}
                   rows={3}
                   required
-                  placeholder="e.g. Thermit weld executed, rail grinding done, track gauge tested, cleared for 30 km/h..."
+                  placeholder="e.g. Thermit weld executed, rail grinding done, track gauge tested, cleared for 30 km/h (or dictate using Bhashini Voice)..."
                   className="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-white focus:outline-none focus:border-amber-500"
                 />
               </div>
@@ -559,13 +599,23 @@ export const EngineerWorkQueue: React.FC<EngineerWorkQueueProps> = ({ initialFil
               </div>
 
               <div>
-                <label className="block text-slate-300 font-bold mb-1">Detailed Problem Description *</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-slate-300 font-bold">Detailed Problem Description *</label>
+                  <button
+                    type="button"
+                    onClick={() => { setBhashiniTarget('problem'); setBhashiniModalOpen(true) }}
+                    className="inline-flex items-center space-x-1 text-[11px] text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 px-2 py-0.5 rounded border border-amber-500/30 font-bold transition-colors active:scale-95"
+                  >
+                    <Mic className="w-3 h-3 text-amber-400 animate-pulse" />
+                    <span>Bhashini Voice (हिन्दी / தமிழ்)</span>
+                  </button>
+                </div>
                 <textarea
                   rows={3}
                   value={problemDescription}
                   onChange={(e) => setProblemDescription(e.target.value)}
                   required
-                  placeholder="e.g. Replacement switch motor armature unavailable from depot. Requires 35 additional minutes..."
+                  placeholder="e.g. Replacement switch motor armature unavailable from depot. Requires 35 additional minutes (or dictate using Bhashini Voice)..."
                   className="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-white focus:outline-none focus:border-amber-500"
                 />
               </div>
@@ -613,6 +663,20 @@ export const EngineerWorkQueue: React.FC<EngineerWorkQueueProps> = ({ initialFil
           </form>
         </div>
       )}
+
+      {/* Bhashini Voice Input Modal */}
+      <BhashiniVoiceModal
+        isOpen={bhashiniModalOpen}
+        onClose={() => setBhashiniModalOpen(false)}
+        onInsert={(text) => {
+          if (bhashiniTarget === 'completion') {
+            setCompletionNotes((prev) => prev ? `${prev} ${text}` : text)
+          } else if (bhashiniTarget === 'problem') {
+            setProblemDescription((prev) => prev ? `${prev} ${text}` : text)
+          }
+          setBhashiniModalOpen(false)
+        }}
+      />
     </div>
   )
 }

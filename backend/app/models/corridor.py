@@ -10,6 +10,11 @@ class Corridor(Base):
     name = Column(String(100), nullable=False)
     start_station = Column(String(100), nullable=False)
     end_station = Column(String(100), nullable=False)
+    # Open Government Data (data.gov.in) Schema Alignment
+    start_station_code = Column(String(10), nullable=True)  # e.g., NDLS, ADI, ASN, SA
+    end_station_code = Column(String(10), nullable=True)    # e.g., CNB, BRC, DHN, ED
+    gmt_density = Column(Float, default=52.4)              # Gross Million Tonnes per annum
+    data_source = Column(String(100), default="Aligned with OGD Platform India (data.gov.in)")
     traffic_level = Column(Integer, default=1)  # 1-5 scale
     route_capacity = Column(Integer, nullable=True)  # trains per hour
     restrictions = Column(Text, nullable=True)  # JSON
@@ -36,6 +41,12 @@ class Section(Base):
     start_km = Column(Float, nullable=False)
     end_km = Column(Float, nullable=False)
     length_km = Column(Float, nullable=False)
+    # Open Government Data (data.gov.in) Schema Alignment
+    start_chainage_km = Column(Float, nullable=True)  # Datum track chainage (e.g., 142.600)
+    end_chainage_km = Column(Float, nullable=True)    # Datum track chainage (e.g., 179.100)
+    station_code = Column(String(10), nullable=True)  # Nearest station code e.g. SA, ED, GZB
+    gmt_density = Column(Float, default=48.6)         # Section GMT metric
+    data_source = Column(String(100), default="Aligned with OGD Platform India (data.gov.in)")
     max_speed = Column(Integer, nullable=True)  # km/h
     gradient = Column(Float, nullable=True)  # percentage
     curvature = Column(Text, nullable=True)  # JSON for curve data

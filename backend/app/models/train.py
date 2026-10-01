@@ -24,6 +24,11 @@ class Train(Base):
     train_number = Column(String(20), nullable=False, unique=True)
     train_type = Column(Enum(TrainType), nullable=False)
     priority = Column(Enum(TrainPriority), default=TrainPriority.MEDIUM)
+    # Open Government Data (data.gov.in) Schema Alignment
+    origin_station_code = Column(String(10), nullable=True)        # e.g., NDLS, ADI, MAS, CSMT
+    destination_station_code = Column(String(10), nullable=True)   # e.g., CNB, BRC, ED, HWH
+    ogd_train_id = Column(String(30), nullable=True)               # Official IR OGD dataset ID
+    data_source = Column(String(100), default="Aligned with OGD Platform India (data.gov.in)")
     max_speed = Column(Integer, nullable=True)  # km/h
     capacity = Column(Integer, nullable=True)  # passengers or cargo weight
     current_status = Column(String(50), default="AVAILABLE")  # AVAILABLE, IN_SERVICE, MAINTENANCE, etc.
@@ -44,6 +49,11 @@ class TrainMovement(Base):
     train_id = Column(Integer, ForeignKey("trains.train_id"), nullable=False)
     corridor_id = Column(Integer, ForeignKey("corridors.corridor_id"), nullable=False)
     section_id = Column(Integer, ForeignKey("sections.section_id"), nullable=False)
+    # Open Government Data (data.gov.in) Schema Alignment
+    station_code = Column(String(10), nullable=True)  # Timetable stop station code
+    chainage_km = Column(Float, nullable=True)        # Section chainage mark
+    platform_no = Column(String(10), nullable=True)   # Station platform
+    data_source = Column(String(100), default="Aligned with OGD Platform India (data.gov.in)")
     arrival_time = Column(DateTime, nullable=False)
     departure_time = Column(DateTime, nullable=False)
     scheduled_duration = Column(Integer, nullable=True)  # minutes
