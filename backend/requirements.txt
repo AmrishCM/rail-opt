@@ -32,9 +32,6 @@ reportlab>=4.0.0
 # Excel generation
 openpyxl>=3.1.0
 
-# For CSV handling
-csv-module>=0.0.1
-
 # Testing
 pytest>=7.0.0
 pytest-asyncio>=0.21.0
