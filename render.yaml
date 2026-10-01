@@ -1,0 +1,62 @@
+services:
+  # ----------------------------------------------------
+  # 1. RailOpt-AI Backend (FastAPI + Python ML)
+  # ----------------------------------------------------
+  - type: web
+    name: railopt-backend
+    env: python
+    region: oregon
+    plan: free
+    rootDir: railopt-ai/backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: BACKEND_CORS_ORIGINS
+        value: "*"
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: 60
+      - key: REFRESH_TOKEN_EXPIRE_DAYS
+        value: 7
+      # NVIDIA Foundation Model API Configuration
+      - key: NVIDIA_API_KEY
+        sync: false # Set securely in Render dashboard Environment settings
+      - key: NVIDIA_BASE_URL
+        value: https://integrate.api.nvidia.com/v1
+      - key: NVIDIA_CHAT_MODEL
+        value: openai/gpt-oss-120b
+      - key: NVIDIA_FALLBACK_CHAT_MODEL
+        value: openai/gpt-oss-20b
+      # DPI Sandbox Secrets
+      - key: BHASHINI_API_KEY
+        sync: false
+      - key: APISETU_API_KEY
+        sync: false
+
+  # ----------------------------------------------------
+  # 2. RailOpt-AI Frontend (React + Vite)
+  # ----------------------------------------------------
+  - type: web
+    name: railopt-frontend
+    env: static
+    region: oregon
+    plan: free
+    rootDir: railopt-ai/frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: NODE_VERSION
+        value: 18.20.0
+      - key: VITE_API_BASE_URL
+        fromService:
+          type: web
+          name: railopt-backend
+          property: host
